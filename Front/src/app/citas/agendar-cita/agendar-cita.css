@@ -1,0 +1,233 @@
+/* SEMANAS SELECTOR */
+.semanas-container {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.semana-btn {
+  padding: 10px 20px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background-color: white;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.semana-btn:hover {
+  border-color: #1b4f72;
+  color: #1b4f72;
+}
+
+.semana-activa {
+  background-color: #1b4f72;
+  color: white;
+  border-color: #1b4f72;
+}
+
+/* SLOTS POR DÍA */
+.dia-slots-container {
+  margin-bottom: 20px;
+}
+
+.dia-slots-container:last-child {
+  margin-bottom: 0;
+}
+
+.dia-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+}
+
+.slot-btn {
+  padding: 10px 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  font-family: 'SFMono-Regular', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.slot-btn:hover {
+  border-color: #1b4f72;
+  background-color: #eaf2f8;
+  color: #1b4f72;
+}
+
+.slot-seleccionado {
+  background-color: #1b4f72;
+  color: white;
+  border-color: #1b4f72;
+}
+
+/* TARJETA DE CONFIRMACIÓN */
+.card-confirm {
+  border: 2px solid #d4edda;
+  background-color: #f8fdf9;
+}
+
+.card-confirm .card-body {
+  padding: 32px;
+  text-align: center;
+}
+
+.confirm-content h5 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.confirm-content i {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+/* DETALLES DE CONFIRMACIÓN */
+.confirm-details {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 16px;
+  text-align: left;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-valor {
+  color: #333;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* TARJETA */
+.card {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 16px 20px;
+  border-radius: 10px 10px 0 0;
+}
+
+.card-header h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* BOTONES */
+.btn {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #1b4f72;
+  border-color: #1b4f72;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #153a52;
+  border-color: #153a52;
+  color: white;
+}
+
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #dee2e6;
+}
+
+.btn-outline-secondary:hover {
+  color: white;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-lg {
+  padding: 10px 20px;
+  font-size: 15px;
+}
+
+/* ICONOS */
+i.bi {
+  margin-right: 6px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .slots-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+
+  .slot-btn {
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+
+  .card-confirm .card-body {
+    padding: 20px;
+  }
+
+  .semanas-container {
+    gap: 8px;
+  }
+
+  .semana-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}

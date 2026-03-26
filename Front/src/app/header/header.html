@@ -1,0 +1,49 @@
+<section class="sidebar-logo">
+  <div class="logo-mark">
+    <div class="logo-dot"><span>PZ</span></div>
+    <div>
+      <div class="logo-name">{{ nombreClinica }}</div>
+      <div class="logo-sub">{{ subtitulo }}</div>
+    </div>
+  </div>
+</section>
+
+<nav class="sidebar-nav">
+  <div class="nav-section">
+    <div class="nav-label">Agenda</div>
+    <a class="nav-item" routerLink="/citas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <i class="bi bi-calendar3"></i>
+      <span>Citas</span>
+    </a>
+    <a class="nav-item" routerLink="/crear-cita" routerLinkActive="active">
+      <i class="bi bi-plus-circle"></i>
+      <span>Nueva Cita</span>
+    </a>
+    <a class="nav-item" routerLink="/agendar-cita" routerLinkActive="active">
+      <i class="bi bi-clock"></i>
+      <span>Agendar</span>
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Sistema</div>
+    <a class="nav-item" routerLink="/configuracion" routerLinkActive="active">
+      <i class="bi bi-sliders"></i>
+      <span>Configuración</span>
+    </a>
+    <a class="nav-item" routerLink="/clientes" routerLinkActive="active">
+      <i class="bi bi-people"></i>
+      <span>Clientes</span>
+    </a>
+  </div>
+</nav>
+
+<section class="sidebar-footer">
+  <div class="user-chip">
+    <div class="avatar">MA</div>
+    <div class="user-info">
+      <div class="user-name">{{ usuario }}</div>
+      <div class="user-role">{{ rol }}</div>
+    </div>
+  </div>
+</section>

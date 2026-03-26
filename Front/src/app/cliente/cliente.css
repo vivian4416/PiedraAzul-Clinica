@@ -1,0 +1,186 @@
+.section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-left: 4px solid var(--accent);
+  padding-left: .75rem;
+  margin-bottom: 1.25rem;
+}
+
+.carousel-wrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px #0e6b7c;
+}
+.carousel-item { position: relative; }
+.carousel-item img {
+  height: 340px;
+  width: 100%;
+  object-fit: cover;
+  filter: brightness(.78);
+}
+.carousel-caption-custom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, #0a1628);
+  padding: 2rem 2.5rem 1.8rem;
+  text-align: left;
+}
+.carousel-caption-custom h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: .3rem;
+}
+.carousel-caption-custom p {
+  color: #d9d9d9;
+  font-size: .9rem;
+  margin: 0;
+}
+.carousel-control-prev,
+.carousel-control-next {
+  width: 3rem; height: 3rem;
+  top: 50%; transform: translateY(-50%);
+  background: #262626;
+  backdrop-filter: blur(4px);
+  border-radius: 50%;
+  margin: 0 .6rem;
+}
+
+.sidebar-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px #0e6b7c;
+  overflow: hidden;
+}
+.sidebar-card .sidebar-head {
+  background: var(--primary-md);
+  color: white;
+  padding: .85rem 1rem;
+  font-weight: 700;
+  font-size: .95rem;
+}
+.sidebar-card .list-group-item {
+  border: none;
+  border-bottom: 1px solid var(--accent-light);
+  padding: .65rem 1rem;
+  font-size: .9rem;
+}
+.sidebar-card .list-group-item a {
+  color: var(--primary-md);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color .2s;
+  cursor: pointer;
+}
+.sidebar-card .list-group-item a:hover { color: var(--primary-light); }
+.sidebar-card .list-group-item a::before {
+  content: '>';
+  margin-right: .45rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+#descripcionEspecialidad {
+  background: var(--gray-bg);
+  border: 1px solid var(--accent-light);
+  border-left: 4px solid var(--primary-light);
+  border-radius: 10px;
+  color: var(--primary);
+  font-size: .9rem;
+  padding: .9rem 1rem;
+}
+
+.doctor-card {
+  border: 1px solid #e2eef1;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform .25s, box-shadow .25s;
+  background: white;
+}
+.doctor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 36px #0e6b7c;
+}
+.doctor-card .card-img-wrap {
+  position: relative;
+  overflow: hidden;
+  height: 160px;
+  background: var(--gray-bg);
+}
+.doctor-card .card-img-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .4s;
+}
+.doctor-card:hover .card-img-wrap img { transform: scale(1.06); }
+.doctor-card .specialty-badge {
+  position: absolute;
+  top: .6rem; right: .6rem;
+  background: var(--accent);
+  color: var(--text-muted);
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: .2rem .55rem;
+  border-radius: 50px;
+}
+.doctor-card .card-body { padding: 1rem; }
+.doctor-card .card-title { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+.doctor-card .card-sub { font-size: .78rem; color: var(--primary-md); font-weight: 600; margin-bottom: .4rem; }
+.doctor-card .card-text { font-size: .8rem; color: var(--text-dark); margin-bottom: .75rem; }
+.doctor-card .btn-agendar {
+  font-size: .8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: .45rem .85rem;
+  width: 100%;
+  border-color: var(--primary-light);
+  background-color: var(--primary);
+}
+
+.form-section {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 6px 30px #0e6b7c;
+  padding: 2.5rem;
+}
+.form-control, .form-select {
+  border-radius: 9px;
+  border: 1.5px solid #d1e8ed;
+  font-size: .9rem;
+  padding: .6rem .9rem;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color .2s, box-shadow .2s;
+}
+.form-control:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px #1a8fa3;
+}
+.form-label {
+  font-weight: 600;
+  font-size: .85rem;
+  color: var(--primary);
+  margin-bottom: .35rem;
+}
+.btn-registrar {
+  background: var(--primary-md);
+  border: none;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: .95rem;
+  padding: .7rem 2.2rem;
+  border-radius: 10px;
+  transition: background .2s, transform .15s;
+  cursor: pointer;
+}
+.btn-registrar:hover {
+  background: var(--primary);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 575.98px) {
+  .form-section { padding: 1.4rem; }
+  .carousel-item img { height: 220px; }
+}

@@ -1,0 +1,10 @@
+{
+  "routes": {
+    "/": {},
+    "/agendar-cita": {},
+    "/citas": {},
+    "/clientes": {},
+    "/configuracion": {},
+    "/crear-cita": {}
+  }
+}

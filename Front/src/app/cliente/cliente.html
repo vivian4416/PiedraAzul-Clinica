@@ -1,0 +1,275 @@
+<div class="container mt-4">
+
+  <!--SECCION 1 - CARRUSEL DE PROMOCIONES-->
+  <section id="promos" class="mb-5">
+    <h2 class="section-title">Promociones</h2>
+
+    <div id="carouselPromos" class="carousel slide carousel-wrapper" data-bs-ride="carousel">
+      
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselPromos" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#carouselPromos" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#carouselPromos" data-bs-slide-to="2"></button>
+      </div>
+
+      <div class="carousel-inner">
+
+        <!-- diapositiva 1 -->
+        <div class="carousel-item active">
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=80" class="d-block w-100" alt="Promo Fisioterapia">
+          <div class="carousel-caption-custom">
+            <h3>Fisioterapia Especializada</h3>
+            <p>Recupera tu movilidad con nuestros expertos en fisioterapia deportiva y rehabilitacion.</p>
+          </div>
+        </div>
+
+        <!-- diapositiva 2 -->
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=900&q=80" class="d-block w-100" alt="Promo Medicina Alternativa">
+          <div class="carousel-caption-custom">
+            <h3>Medicina Alternativa</h3>
+            <p>Terapia neural y quiropraxia para un enfoque integral del dolor.</p>
+          </div>
+        </div>
+
+        <!-- diapositiva 3 -->
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900&q=80" class="d-block w-100" alt="Promo Nutricion">
+          <div class="carousel-caption-custom">
+            <h3>Nutricion y Dietetica</h3>
+            <p>Planes alimentarios a medida para apoyar tu salud desde adentro.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselPromos" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Anterior</span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselPromos" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Siguiente</span>
+      </button>
+
+    </div>
+  </section>
+
+  <!--SECCION 2 - MEDICOS-->
+  <section id="medicos" class="mb-5">
+    <h2 class="section-title">Nuestros Medicos</h2>
+
+    <div class="row g-4">
+
+      <!-- barra lateral de especialidades -->
+      <aside class="col-12 col-sm-2 col-md-4">
+        <div class="sidebar-card">
+          <div class="sidebar-head">Especialidades</div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <a href="#medicos" (click)="seleccionarEspecialidad('fisio', $event)">Fisioterapia</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#medicos" (click)="seleccionarEspecialidad('nutri', $event)">Nutricion y Dietetica Terapeutica</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#medicos" (click)="seleccionarEspecialidad('quiro', $event)">Quiropraxia</a>
+            </li>
+            <li class="list-group-item">
+              <a href="#medicos" (click)="seleccionarEspecialidad('neural', $event)">Terapia Neural</a>
+            </li>
+          </ul>
+        </div>
+        <div id="descripcionEspecialidad" class="mt-3">
+          {{ descripcionActual }}
+        </div>
+
+      </aside>
+
+      <!-- tarjetas de medicos -->
+      <main class="col-12 col-sm-10 col-md-8">
+        <div class="row g-3">
+
+          <!-- medico 1 -->
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="doctor-card h-100">
+              <div class="card-img-wrap">
+                <img src="https://images.generated.photos/ETvAVQ7nhh8-43EetE3eH6dMvjwD6w_Mm2biNL8L7zg/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/MjYxNDI5LmpwZw.jpg" class="img-fluid border" alt="Dr. Juan Perez">
+                <span class="specialty-badge">Fisioterapia</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Dr. Juan Perez</h5>
+                <p class="card-sub">Fisioterapia Deportiva</p>
+                <p class="card-text">Comprometido con la recuperacion y el bienestar de sus pacientes.</p>
+                <button class="btn btn-primary btn-agendar mt-auto">Agendar cita</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- medico 2 -->
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="doctor-card h-100">
+              <div class="card-img-wrap">
+                <img src="https://images.generated.photos/-nr8Bd6M9IX--WEV6Yz6FIbAaIQpsPuWteI78K6ywao/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/Mjg1NDc2LmpwZw.jpg" class="img-fluid border" alt="Dra. Catalina Sanchez">
+                <span class="specialty-badge">Quiropraxia</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Dra. Catalina Sanchez</h5>
+                <p class="card-sub">Quiropraxia Avanzada</p>
+                <p class="card-text">Enfocada en tu postura, movilidad y bienestar postural.</p>
+                <button class="btn btn-primary btn-agendar mt-auto">Agendar cita</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- medico 3 -->
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="doctor-card h-100">
+              <div class="card-img-wrap">
+                <img src="https://images.generated.photos/Y4NXM1gU6A6aR8UtGJ3fE5zSzFWlEcvO1U2pld-HjVw/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/MDUyMzMzLmpwZw.jpg" class="img-fluid border" alt="Dr. Andres Cardozo">
+                <span class="specialty-badge">Nutricion</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Dr. Andres Cardozo</h5>
+                <p class="card-sub">Nutricion Terapeutica</p>
+                <p class="card-text">Planes alimentarios personalizados para apoyar tu salud.</p>
+                <button class="btn btn-primary btn-agendar mt-auto">Agendar cita</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- medico 4 -->
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="doctor-card h-100">
+              <div class="card-img-wrap">
+                <img src="https://images.generated.photos/j-kkhuzeUsRc0mK2yhMOHGtLSzzANlDW9Tx3BGV6XZc/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/Njk4MTM2LmpwZw.jpg" class="img-fluid border" alt="Dra. Laura Morales">
+                <span class="specialty-badge">T. Neural</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Dra. Laura Morales</h5>
+                <p class="card-sub">Terapia Neural</p>
+                <p class="card-text">Enfoque integral para el manejo del dolor cronico.</p>
+                <button class="btn btn-primary btn-agendar mt-auto">Agendar cita</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!--SECCION 3 - FORMULARIO DE REGISTRO-->
+  <section id="registro" class="mb-5">
+    <h2 class="section-title">Registro de Nuevos Usuarios</h2>
+
+    <div class="form-section">
+      <form id="formRegistro" novalidate (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+
+          <!-- nombre -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="nombre">Nombre</label>
+            <input class="form-control" id="nombre" name="nombre" type="text"
+              placeholder="Tu nombre" required
+              (blur)="validarNombre()" [(ngModel)]="formData.nombre">
+            <small class="text-danger">{{ errores.nombre }}</small>
+          </div>
+
+          <!-- apellido -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="apellido">Apellido</label>
+            <input class="form-control" id="apellido" name="apellido" type="text"
+              placeholder="Tu apellido" required
+              (blur)="validarApellido()" [(ngModel)]="formData.apellido">
+            <small class="text-danger">{{ errores.apellido }}</small>
+          </div>
+
+          <!-- email -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="email">Correo electronico</label>
+            <input class="form-control" id="email" name="email" type="email"
+              placeholder="correo@ejemplo.com" required
+              (blur)="validarEmail()" [(ngModel)]="formData.email">
+            <div class="form-text">Usa un correo valido al que tengas acceso.</div>
+            <small class="text-danger">{{ errores.email }}</small>
+          </div>
+
+          <!-- telefono -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="telefono">Telefono</label>
+            <input class="form-control" id="telefono" name="telefono" type="tel"
+              placeholder="Ej: 3001234567" required
+              (blur)="validarTelefono()" [(ngModel)]="formData.telefono">
+            <small class="text-danger">{{ errores.telefono }}</small>
+          </div>
+
+          <!-- tipo documento -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="tipoDocumento">Tipo de documento</label>
+            <select class="form-control" id="tipoDocumento" name="tipoDocumento" required
+              (blur)="validarTipoDocumento()" [(ngModel)]="formData.tipoDocumento">
+              <option value="">Selecciona tu tipo de documento</option>
+              <option value="cedula_ciudadania">Cedula de ciudadania</option>
+              <option value="tarjeta_identidad">Tarjeta de identidad</option>
+              <option value="pasaporte">Pasaporte</option>
+              <option value="cedula_extranjeria">Cedula extranjeria</option>
+            </select>
+            <small class="text-danger">{{ errores.tipoDocumento }}</small>
+          </div>
+
+          <!-- numero identificacion -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="numeroIdentificacion">Numero de identificacion</label>
+            <input class="form-control" id="numeroIdentificacion" name="numeroIdentificacion" type="text"
+              placeholder="Ej: 1234567890" required
+              (blur)="validarNumeroIdentificacion()" [(ngModel)]="formData.numeroIdentificacion">
+            <small class="text-danger">{{ errores.numeroIdentificacion }}</small>
+          </div>
+
+          <!-- genero -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="genero">Genero</label>
+            <select class="form-control" id="genero" name="genero" required
+              (blur)="validarGenero()" [(ngModel)]="formData.genero">
+              <option value="">Selecciona tu genero</option>
+              <option value="masculino">Masculino</option>
+              <option value="femenino">Femenino</option>
+              <option value="otro">Otro</option>
+            </select>
+            <small class="text-danger">{{ errores.genero }}</small>
+          </div>
+
+          <!-- fecha nacimiento -->
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="fechaNacimiento">Fecha de nacimiento</label>
+            <input class="form-control" id="fechaNacimiento" name="fechaNacimiento" type="date" required
+              (blur)="validarFechaNacimiento()" [(ngModel)]="formData.fechaNacimiento">
+            <small class="text-danger">{{ errores.fechaNacimiento }}</small>
+          </div>
+
+          <!-- terminos -->
+          <div class="col-12">
+            <div class="form-check d-flex align-items-center gap-2">
+              <input class="form-check-input mt-0" id="terminos" name="terminos" type="checkbox"
+                (change)="validarTerminos()" [(ngModel)]="formData.terminos">
+              <label class="form-check-label" for="terminos" style="font-size:.88rem;">
+                Acepto los <a href="#" style="color:var(--teal);">terminos y condiciones</a>
+                y la <a href="#" style="color:var(--teal);">politica de privacidad</a>.
+              </label>
+            </div>
+            <div class="text-danger" style="font-size:.82rem;">{{ errores.terminos }}</div>
+          </div>
+
+          <!-- boton envio -->
+          <div class="col-12 d-flex justify-content-start">
+            <button class="btn btn-primary btn-registrar" type="submit">
+              <i class="bi bi-check2-circle me-2"></i>Crear mi cuenta
+            </button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </section>
+</div>

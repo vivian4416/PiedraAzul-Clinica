@@ -1,0 +1,67 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <!-- INDICADORES DE SEMANA -->
+      <div class="semanas-container mb-5">
+        <button 
+          *ngFor="let i of [1,2,3]"
+          class="semana-btn"
+          [class.semana-activa]="semanaSeleccionada === i"
+          (click)="seleccionarSemana(i)">
+          Semana {{ i }}
+        </button>
+      </div>
+
+      <!-- DISPONIBILIDAD DE SLOTS -->
+      <div class="card mb-5">
+        <div class="card-header">
+          <h5 class="mb-0">Selecciona tu horario preferido</h5>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let dia of diasArray" class="dia-slots-container">
+            <div class="dia-titulo">{{ dia }}</div>
+            <div class="slots-grid">
+              <button 
+                *ngFor="let hora of diasDisponibles[dia]"
+                class="slot-btn"
+                [class.slot-seleccionado]="slotSeleccionado?.dia === dia && slotSeleccionado?.hora === hora"
+                (click)="seleccionarSlot(dia, hora)">
+                {{ hora }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETA DE CONFIRMACIÓN -->
+      <div *ngIf="mostrarConfirmacion && slotSeleccionado" class="card card-confirm">
+        <div class="card-body">
+          <div class="confirm-content">
+            <h5>
+              <i class="bi bi-check-circle text-success"></i>
+              Cita Confirmada
+            </h5>
+            <div class="confirm-details mt-4">
+              <div class="detail-row">
+                <span class="detail-label">Fecha y Hora:</span>
+                <span class="detail-valor">{{ slotSeleccionado.dia }} a las {{ slotSeleccionado.hora }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Médico:</span>
+                <span class="detail-valor">{{ getNombreMedico() }}</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg w-100 mt-4" (click)="confirmarCita()">
+            <i class="bi bi-calendar-check"></i> Confirmar Cita
+          </button>
+          <button 
+            class="btn btn-outline-secondary btn-lg w-100 mt-2"
+            (click)="slotSeleccionado = null; mostrarConfirmacion = false">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

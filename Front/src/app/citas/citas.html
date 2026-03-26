@@ -1,0 +1,117 @@
+<div class="container py-5">
+    <!-- ESTADÍSTICAS -->
+    <div class="row g-3 mb-5">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Total de citas</div>
+                <div class="stat-value">{{ estadisticas.total }}</div>
+                <div class="stat-meta">citas registradas</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Confirmadas</div>
+                <div class="stat-value">{{ estadisticas.confirmadas }}</div>
+                <div class="stat-meta">listas para atencion</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Atendidas</div>
+                <div class="stat-value">{{ estadisticas.atendidas }}</div>
+                <div class="stat-meta">completadas</div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">Canceladas</div>
+                <div class="stat-value">{{ estadisticas.canceladas }}</div>
+                <div class="stat-meta">no realizadas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="card mb-4">
+        <div class="card-header pe-3">
+            <h5 class="mb-0">Filtrar Citas</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-3">
+                    <label for="filtro-medico" class="form-label">Médico</label>
+                    <select id="filtro-medico" class="form-control" [(ngModel)]="filtroMedico" (change)="filtrar()">
+                        <option *ngFor="let medico of medicosOptions" [ngValue]="medico.id">
+                            {{ medico.nombre }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label for="filtro-fecha" class="form-label">Fecha</label>
+                    <input type="date" id="filtro-fecha" class="form-control" [(ngModel)]="filtroFecha"
+                        (change)="filtrar()">
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="form-label d-block" aria-hidden="true"></div>
+                    <button class="btn btn-primary me-2" (click)="filtrar()">
+                        <i class="bi bi-funnel"></i> Aplicar filtros
+                    </button>
+                    <button class="btn btn-outline-secondary" (click)="exportarCSV()">
+                        <i class="bi bi-download"></i> Exportar CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE CITAS -->
+    <div class="card">
+        <div class="card-header pe-3">
+            <h5 class="mb-0">{{ getTituloTabla() }}</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Documento</th>
+                        <th>Celular</th>
+                        <th>Origen</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngIf="citasFiltradas.length === 0">
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                <strong>Sin citas para este filtro</strong><br>
+                                <small>Intente otra fecha o médico</small>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngFor="let cita of citasFiltradas">
+                        <td><strong>{{ cita.hora }}</strong></td>
+                        <td>{{ cita.paciente }}</td>
+                        <td><code>{{ cita.doc }}</code></td>
+                        <td>{{ cita.cel }}</td>
+                        <td>
+                            <span *ngIf="cita.origen === 'AUTONOMA'" class="badge bg-info text-dark">Web</span>
+                            <span *ngIf="cita.origen === 'MANUAL'" class="badge bg-secondary">Manual</span>
+                        </td>
+                        <td>
+                            <span class="badge" [ngClass]="getBadgeClass(cita.estado)">
+                                {{ cita.estado | titlecase }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">Ver</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

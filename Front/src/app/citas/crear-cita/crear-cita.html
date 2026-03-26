@@ -1,0 +1,224 @@
+<div class="container py-5">
+  <!-- NOTIFICACIÓN -->
+  <div *ngIf="mostrarToast" [ngClass]="{'toast-show': mostrarToast}" 
+       class="alert" [ngClass]="tipoToast === 'success' ? 'alert-success' : 'alert-danger'" role="alert">
+    <i [ngClass]="tipoToast === 'success' ? 'bi bi-check-circle' : 'bi bi-exclamation-circle'" class="me-2"></i>
+    {{ mensajeToast }}
+  </div>
+
+  <div class="row">
+    <!-- COLUMNA IZQUIERDA: BÚSQUEDA Y DATOS DEL PACIENTE -->
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Información del Paciente</h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- BUSCAR PACIENTE -->
+          <div class="mb-4">
+            <label for="doc-input" class="form-label">Documento de Identidad *</label>
+            <div class="input-group">
+              <input 
+                type="text" 
+                id="doc-input" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('doc')"
+                placeholder="Ej: 1234567890"
+                [(ngModel)]="formPaciente.doc"
+                (ngModelChange)="onDocumentoChange($event)"
+                (blur)="onBlur('doc'); buscarPaciente()">
+              <button class="btn btn-outline-primary" type="button" (click)="buscarPaciente()">
+                <i class="bi bi-search"></i> Buscar
+              </button>
+            </div>
+            <div *ngIf="mensajeError('doc')" class="error-msg">{{ mensajeError('doc') }}</div>
+          </div>
+
+          <!-- PACIENTE ENCONTRADO -->
+          <div *ngIf="pacienteEncontrado" class="alert alert-success mb-3">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Paciente encontrado: {{ pacienteEncontrado.nombres }} {{ pacienteEncontrado.apellidos }}</strong>
+          </div>
+
+          <!-- DATOS PERSONALES -->
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label for="nombres" class="form-label">Nombre *</label>
+              <input 
+                type="text" 
+                id="nombres" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('nombres')"
+                placeholder="Nombre"
+                [(ngModel)]="formPaciente.nombres"
+                (ngModelChange)="onTextoChange('nombres', $event)"
+                (blur)="onBlur('nombres')">
+              <div *ngIf="mensajeError('nombres')" class="error-msg">{{ mensajeError('nombres') }}</div>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+              <label for="apellidos" class="form-label">Apellido *</label>
+              <input 
+                type="text" 
+                id="apellidos" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('apellidos')"
+                placeholder="Apellido"
+                [(ngModel)]="formPaciente.apellidos"
+                (ngModelChange)="onTextoChange('apellidos', $event)"
+                (blur)="onBlur('apellidos')">
+              <div *ngIf="mensajeError('apellidos')" class="error-msg">{{ mensajeError('apellidos') }}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label for="celular" class="form-label">Celular *</label>
+              <input 
+                type="tel" 
+                id="celular" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('cel')"
+                placeholder="300XXXXXXX"
+                [(ngModel)]="formPaciente.cel"
+                (ngModelChange)="onCelularChange($event)"
+                (blur)="onBlur('cel')">
+              <div *ngIf="mensajeError('cel')" class="error-msg">{{ mensajeError('cel') }}</div>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+              <label for="genero" class="form-label">Género *</label>
+              <select id="genero" class="form-control" [class.is-invalid]="mostrarError('genero')"
+                [(ngModel)]="formPaciente.genero" (ngModelChange)="onBlur('genero')">
+                <option value="">Selecciona...</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="Otro">Otro</option>
+              </select>
+              <div *ngIf="mensajeError('genero')" class="error-msg">{{ mensajeError('genero') }}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 col-md-6 mb-3">
+              <label for="fnac" class="form-label">Fecha de Nacimiento</label>
+              <input 
+                type="date" 
+                id="fnac" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('fnac')"
+                [max]="maxFechaNacimientoIso"
+                [(ngModel)]="formPaciente.fnac"
+                (ngModelChange)="onBlur('fnac')">
+              <div *ngIf="mensajeError('fnac')" class="error-msg">{{ mensajeError('fnac') }}</div>
+            </div>
+            <div class="col-12 col-md-6 mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                class="form-control"
+                [class.is-invalid]="mostrarError('email')"
+                placeholder="correo@ejemplo.com"
+                [(ngModel)]="formPaciente.email"
+                (ngModelChange)="onBlur('email')">
+              <div *ngIf="mensajeError('email')" class="error-msg">{{ mensajeError('email') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: SELECCIONAR CITA -->
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Detalles de la Cita</h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- SELECCIONAR MÉDICO -->
+          <div class="mb-4">
+            <label for="medico" class="form-label">Médico *</label>
+            <select 
+              id="medico" 
+              class="form-control"
+              [class.is-invalid]="mostrarError('medico')" 
+              [(ngModel)]="formCita.medico"
+              (ngModelChange)="onMedicoChange($event)">
+              <option value="">Selecciona un médico...</option>
+              <option *ngFor="let medico of medicos" [value]="medico.id">
+                Dr/Dra. {{ medico.nombre }} {{ medico.apellido }} — {{ medico.especialidad }}
+              </option>
+            </select>
+            <div *ngIf="mensajeError('medico')" class="error-msg">{{ mensajeError('medico') }}</div>
+          </div>
+
+          <!-- SELECCIONAR FECHA -->
+          <div class="mb-4">
+            <label for="fecha" class="form-label">Fecha *</label>
+            <input 
+              type="date" 
+              id="fecha" 
+              class="form-control"
+              [class.is-invalid]="mostrarError('fecha')"
+              [min]="hoyIso"
+              [(ngModel)]="formCita.fecha"
+              (input)="onFechaCitaInput($event)"
+              (change)="onFechaCitaInput($event)">
+            <div *ngIf="mensajeError('fecha')" class="error-msg">{{ mensajeError('fecha') }}</div>
+          </div>
+
+          <!-- SELECCIONAR HORA -->
+          <div *ngIf="mostrarSlots" class="mb-4">
+            <div id="horarios-disponibles-label" class="form-label">Horarios Disponibles *</div>
+            <div class="slots-grid">
+              <button 
+                *ngFor="let slot of slots"
+                class="slot-btn"
+                [class.slot-ocupado]="esSlotOcupado(slot)"
+                [class.slot-seleccionado]="slotSeleccionado === slot"
+                [disabled]="esSlotOcupado(slot)"
+                (click)="seleccionarSlot(slot)">
+                {{ slot }}
+                <small *ngIf="esSlotOcupado(slot)" class="d-block">Ocupado</small>
+              </button>
+            </div>
+            <div *ngIf="mensajeDisponibilidad" class="error-msg mt-2">{{ mensajeDisponibilidad }}</div>
+            <div *ngIf="mensajeError('slot')" class="error-msg mt-1">{{ mensajeError('slot') }}</div>
+          </div>
+
+          <!-- RESUMEN DE LA CITA -->
+          <div *ngIf="formCita.medico && formCita.fecha && slotSeleccionado" class="resumen-cita">
+            <div class="alert alert-info">
+              <strong>Resumen de tu cita</strong>
+              <div class="mt-3">
+                <div class="resumen-row">
+                  <span class="resumen-label">Médico:</span>
+                  <span class="resumen-valor">{{ getNombreMedico() }}</span>
+                </div>
+                <div class="resumen-row">
+                  <span class="resumen-label">Fecha:</span>
+                  <span class="resumen-valor">{{ formatFecha(formCita.fecha) }}</span>
+                </div>
+                <div class="resumen-row">
+                  <span class="resumen-label">Hora:</span>
+                  <span class="resumen-valor resumen-hora">{{ slotSeleccionado }}</span>
+                </div>
+                <div *ngIf="formPaciente.nombres && formPaciente.apellidos" class="resumen-row">
+                  <span class="resumen-label">Paciente:</span>
+                  <span class="resumen-valor">{{ formPaciente.nombres }} {{ formPaciente.apellidos }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BOTÓN CREAR CITA -->
+          <button class="btn btn-primary btn-lg w-100" (click)="crearCita()" [disabled]="guardando">
+            <i class="bi bi-calendar-check"></i>
+            Crear Cita
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

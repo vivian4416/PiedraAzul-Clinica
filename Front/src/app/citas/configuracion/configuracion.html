@@ -1,0 +1,137 @@
+<div class="container py-5">
+  <div class="row">
+    <!-- CONFIGURACIÓN DEL HORARIO -->
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Horario de Atención</h5>
+        </div>
+        <div class="card-body">
+          
+          <!-- Días de la semana -->
+          <div class="mb-4">
+            <label class="form-label">Días disponibles</label>
+            <div class="dias-container">
+              <button 
+                *ngFor="let dia of diasSemana"
+                class="dia-chip"
+                [class.dia-activo]="diasActivos[dia]"
+                (click)="toggleDia(dia)">
+                {{ dia.substring(0, 3) }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Horario -->
+          <div class="row mb-3">
+            <div class="col-12 col-md-6">
+              <label for="hora-inicio" class="form-label">Hora inicio</label>
+              <input type="time" id="hora-inicio" class="form-control" [(ngModel)]="configuracion.horaInicio">
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="hora-fin" class="form-label">Hora fin</label>
+              <input type="time" id="hora-fin" class="form-control" [(ngModel)]="configuracion.horaFin">
+            </div>
+          </div>
+
+          <!-- Intervalo de slots -->
+          <div class="mb-4">
+            <label for="intervalo" class="form-label">Intervalo entre citas (minutos)</label>
+            <select id="intervalo" class="form-control" [(ngModel)]="configuracion.intervaloSlot">
+              <option value="15">15 minutos</option>
+              <option value="20">20 minutos</option>
+              <option value="30">30 minutos</option>
+              <option value="60">1 hora</option>
+            </select>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="mb-3">
+            <label for="sitio" class="form-label">Sitio/Sede</label>
+            <input type="text" id="sitio" class="form-control" placeholder="Nombre de la sede" [(ngModel)]="configuracion.sitio">
+          </div>
+
+          <div class="mb-4">
+            <label for="ubicacion" class="form-label">Dirección</label>
+            <input type="text" id="ubicacion" class="form-control" placeholder="Dirección completa" [(ngModel)]="configuracion.ubicacion">
+          </div>
+
+          <button class="btn btn-primary w-100" (click)="guardarConfiguracion()">
+            <i class="bi bi-check-circle"></i> Guardar Cambios
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GESTIÓN DE MÉDICOS -->
+    <div class="col-12 col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Gestión de Médicos</h5>
+          <button class="btn btn-sm btn-primary" (click)="abrirFormularioMedico()">
+            <i class="bi bi-plus-circle"></i> Agregar
+          </button>
+        </div>
+        <div class="card-body">
+          <div *ngIf="medicos.length === 0" class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+            No hay médicos registrados
+          </div>
+
+          <div *ngFor="let medico of medicos" class="medico-card">
+            <div class="medico-header">
+              <div>
+                <strong>{{ medico.nombre }} {{ medico.apellido }}</strong>
+                <small class="text-muted d-block">{{ medico.especialidad }}</small>
+              </div>
+              <div class="medico-actions">
+                <button 
+                  class="badge"
+                  [ngClass]="medico.activo ? 'badge-success' : 'badge-secondary'"
+                  (click)="toggleActivo(medico)">
+                  {{ medico.activo ? 'Activo' : 'Inactivo' }}
+                </button>
+              </div>
+            </div>
+            <div class="medico-footer">
+              <button class="btn btn-sm btn-outline-primary" (click)="editarMedico(medico)">
+                <i class="bi bi-pencil"></i> Editar
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminarMedico(medico.id)">
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO MODAL PARA MÉDICOS -->
+  <div *ngIf="mostrarFormMedico" class="modal-overlay" (click)="cerrarFormulario()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5>{{ medicoEditando ? 'Editar Médico' : 'Agregar Nuevo Médico' }}</h5>
+        <button type="button" class="btn-close" (click)="cerrarFormulario()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="med-nombre" class="form-label">Nombre *</label>
+          <input type="text" id="med-nombre" class="form-control" [(ngModel)]="formularioMedico.nombre" placeholder="Nombre">
+        </div>
+        <div class="mb-3">
+          <label for="med-apellido" class="form-label">Apellido *</label>
+          <input type="text" id="med-apellido" class="form-control" [(ngModel)]="formularioMedico.apellido" placeholder="Apellido">
+        </div>
+        <div class="mb-3">
+          <label for="med-especialidad" class="form-label">Especialidad *</label>
+          <input type="text" id="med-especialidad" class="form-control" [(ngModel)]="formularioMedico.especialidad" placeholder="Especialidad">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="cerrarFormulario()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarMedico()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
