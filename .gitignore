@@ -1,2 +1,4 @@
 .vscode/
 Front/node_modules/
+target/
+*.class

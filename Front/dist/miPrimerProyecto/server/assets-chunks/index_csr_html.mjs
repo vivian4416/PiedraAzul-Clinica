@@ -16,6 +16,6 @@ export default `<!doctype html>
 
 <body ngcm="">
   <app-root></app-root>
-<script src="main-RTCQQZOF.js" type="module"></script></body>
+<script src="main-AC6TZ2J2.js" type="module"></script></body>
 
 </html>`;

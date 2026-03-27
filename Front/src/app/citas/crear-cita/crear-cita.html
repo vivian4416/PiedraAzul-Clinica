@@ -1,7 +1,7 @@
 <div class="container py-5">
   <!-- NOTIFICACIÓN -->
-  <div *ngIf="mostrarToast" [ngClass]="{'toast-show': mostrarToast}" 
-       class="alert" [ngClass]="tipoToast === 'success' ? 'alert-success' : 'alert-danger'" role="alert">
+  <div *ngIf="mostrarToast" [ngClass]="{'toast-show': mostrarToast}" class="alert"
+    [ngClass]="tipoToast === 'success' ? 'alert-success' : 'alert-danger'" role="alert">
     <i [ngClass]="tipoToast === 'success' ? 'bi bi-check-circle' : 'bi bi-exclamation-circle'" class="me-2"></i>
     {{ mensajeToast }}
   </div>
@@ -14,19 +14,13 @@
           <h5 class="mb-0">Información del Paciente</h5>
         </div>
         <div class="card-body">
-          
+
           <!-- BUSCAR PACIENTE -->
           <div class="mb-4">
             <label for="doc-input" class="form-label">Documento de Identidad *</label>
             <div class="input-group">
-              <input 
-                type="text" 
-                id="doc-input" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('doc')"
-                placeholder="Ej: 1234567890"
-                [(ngModel)]="formPaciente.doc"
-                (ngModelChange)="onDocumentoChange($event)"
+              <input type="text" id="doc-input" class="form-control" [class.is-invalid]="mostrarError('doc')"
+                placeholder="Ej: 1234567890" [(ngModel)]="formPaciente.doc" (ngModelChange)="onDocumentoChange($event)"
                 (blur)="onBlur('doc'); buscarPaciente()">
               <button class="btn btn-outline-primary" type="button" (click)="buscarPaciente()">
                 <i class="bi bi-search"></i> Buscar
@@ -45,28 +39,16 @@
           <div class="row">
             <div class="col-12 col-md-6 mb-3">
               <label for="nombres" class="form-label">Nombre *</label>
-              <input 
-                type="text" 
-                id="nombres" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('nombres')"
-                placeholder="Nombre"
-                [(ngModel)]="formPaciente.nombres"
-                (ngModelChange)="onTextoChange('nombres', $event)"
-                (blur)="onBlur('nombres')">
+              <input type="text" id="nombres" class="form-control" [class.is-invalid]="mostrarError('nombres')"
+                placeholder="Nombre" [(ngModel)]="formPaciente.nombres"
+                (ngModelChange)="onTextoChange('nombres', $event)" (blur)="onBlur('nombres')">
               <div *ngIf="mensajeError('nombres')" class="error-msg">{{ mensajeError('nombres') }}</div>
             </div>
             <div class="col-12 col-md-6 mb-3">
               <label for="apellidos" class="form-label">Apellido *</label>
-              <input 
-                type="text" 
-                id="apellidos" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('apellidos')"
-                placeholder="Apellido"
-                [(ngModel)]="formPaciente.apellidos"
-                (ngModelChange)="onTextoChange('apellidos', $event)"
-                (blur)="onBlur('apellidos')">
+              <input type="text" id="apellidos" class="form-control" [class.is-invalid]="mostrarError('apellidos')"
+                placeholder="Apellido" [(ngModel)]="formPaciente.apellidos"
+                (ngModelChange)="onTextoChange('apellidos', $event)" (blur)="onBlur('apellidos')">
               <div *ngIf="mensajeError('apellidos')" class="error-msg">{{ mensajeError('apellidos') }}</div>
             </div>
           </div>
@@ -74,14 +56,8 @@
           <div class="row">
             <div class="col-12 col-md-6 mb-3">
               <label for="celular" class="form-label">Celular *</label>
-              <input 
-                type="tel" 
-                id="celular" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('cel')"
-                placeholder="300XXXXXXX"
-                [(ngModel)]="formPaciente.cel"
-                (ngModelChange)="onCelularChange($event)"
+              <input type="tel" id="celular" class="form-control" [class.is-invalid]="mostrarError('cel')"
+                placeholder="300XXXXXXX" [(ngModel)]="formPaciente.cel" (ngModelChange)="onCelularChange($event)"
                 (blur)="onBlur('cel')">
               <div *ngIf="mensajeError('cel')" class="error-msg">{{ mensajeError('cel') }}</div>
             </div>
@@ -101,26 +77,14 @@
           <div class="row">
             <div class="col-12 col-md-6 mb-3">
               <label for="fnac" class="form-label">Fecha de Nacimiento</label>
-              <input 
-                type="date" 
-                id="fnac" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('fnac')"
-                [max]="maxFechaNacimientoIso"
-                [(ngModel)]="formPaciente.fnac"
-                (ngModelChange)="onBlur('fnac')">
+              <input type="date" id="fnac" class="form-control" [class.is-invalid]="mostrarError('fnac')"
+                [max]="maxFechaNacimientoIso" [(ngModel)]="formPaciente.fnac" (ngModelChange)="onBlur('fnac')">
               <div *ngIf="mensajeError('fnac')" class="error-msg">{{ mensajeError('fnac') }}</div>
             </div>
             <div class="col-12 col-md-6 mb-3">
               <label for="email" class="form-label">Email</label>
-              <input 
-                type="email" 
-                id="email" 
-                class="form-control"
-                [class.is-invalid]="mostrarError('email')"
-                placeholder="correo@ejemplo.com"
-                [(ngModel)]="formPaciente.email"
-                (ngModelChange)="onBlur('email')">
+              <input type="email" id="email" class="form-control" [class.is-invalid]="mostrarError('email')"
+                placeholder="correo@ejemplo.com" [(ngModel)]="formPaciente.email" (ngModelChange)="onBlur('email')">
               <div *ngIf="mensajeError('email')" class="error-msg">{{ mensajeError('email') }}</div>
             </div>
           </div>
@@ -135,16 +99,12 @@
           <h5 class="mb-0">Detalles de la Cita</h5>
         </div>
         <div class="card-body">
-          
+
           <!-- SELECCIONAR MÉDICO -->
           <div class="mb-4">
             <label for="medico" class="form-label">Médico *</label>
-            <select 
-              id="medico" 
-              class="form-control"
-              [class.is-invalid]="mostrarError('medico')" 
-              [(ngModel)]="formCita.medico"
-              (ngModelChange)="onMedicoChange($event)">
+            <select id="medico" class="form-control" [class.is-invalid]="mostrarError('medico')"
+              [(ngModel)]="formCita.medico" (ngModelChange)="onMedicoChange($event)">
               <option value="">Selecciona un médico...</option>
               <option *ngFor="let medico of medicos" [value]="medico.id">
                 Dr/Dra. {{ medico.nombre }} {{ medico.apellido }} — {{ medico.especialidad }}
@@ -156,27 +116,18 @@
           <!-- SELECCIONAR FECHA -->
           <div class="mb-4">
             <label for="fecha" class="form-label">Fecha *</label>
-            <input 
-              type="date" 
-              id="fecha" 
-              class="form-control"
-              [class.is-invalid]="mostrarError('fecha')"
-              [min]="hoyIso"
-              [(ngModel)]="formCita.fecha"
-              (input)="onFechaCitaInput($event)">
+            <input type="date" id="fecha" class="form-control" [class.is-invalid]="mostrarError('fecha')" [min]="hoyIso"
+              [(ngModel)]="formCita.fecha" (ngModelChange)="onFechaCitaChange($event)" (input)="onFechaCitaInput($event)">
             <div *ngIf="mensajeError('fecha')" class="error-msg">{{ mensajeError('fecha') }}</div>
           </div>
 
           <!-- SELECCIONAR HORA -->
           <div *ngIf="mostrarSlots" class="mb-4">
             <div id="horarios-disponibles-label" class="form-label">Horarios Disponibles *</div>
+            <div *ngIf="cargandoSlots" class="text-muted mb-2">Cargando horarios...</div>
             <div class="slots-grid">
-              <button 
-                *ngFor="let slot of slots"
-                class="slot-btn"
-                [class.slot-ocupado]="esSlotOcupado(slot)"
-                [class.slot-seleccionado]="slotSeleccionado === slot"
-                [disabled]="esSlotOcupado(slot)"
+              <button *ngFor="let slot of slots" class="slot-btn" [class.slot-ocupado]="esSlotOcupado(slot)"
+                [class.slot-seleccionado]="slotSeleccionado === slot" [disabled]="esSlotOcupado(slot)"
                 (click)="seleccionarSlot(slot)">
                 {{ slot }}
                 <small *ngIf="esSlotOcupado(slot)" class="d-block">Ocupado</small>
