@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -60,11 +60,14 @@ export class CrearCitaComponent implements OnInit {
   mensajeToast = '';
   private slotsRequestSeq = 0;
   guardando = false;
+  cargandoSlots = false;
   private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly citasService: CitasService,
     private readonly router: Router,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -72,10 +75,14 @@ export class CrearCitaComponent implements OnInit {
   }
 
   private async cargarInicial(): Promise<void> {
-    await this.citasService.inicializar();
-    this.medicos = this.citasService.getMedicos();
-    this.slots = this.citasService.getSlots();
-    this.slotOcupados = this.citasService.getSlotOcupados();
+    try {
+      await this.citasService.inicializar();
+      this.medicos = this.citasService.getMedicos();
+      this.slots = this.citasService.getSlots();
+      this.slotOcupados = this.citasService.getSlotOcupados();
+    } finally {
+      this.syncUi();
+    }
   }
 
   async buscarPaciente(): Promise<void> {
@@ -107,31 +114,47 @@ export class CrearCitaComponent implements OnInit {
       this.slotOcupados = [];
       this.mensajeDisponibilidad = '';
       this.mostrarSlots = false;
+      this.cargandoSlots = false;
+      this.syncUi();
       return;
     }
 
     const slotPrevio = this.slotSeleccionado;
     this.mostrarSlots = true;
+    this.cargandoSlots = true;
 
-    await this.citasService.cargarSlots(Number.parseInt(medico, 10), fecha);
-    if (requestSeq !== this.slotsRequestSeq) {
-      return;
-    }
+    try {
+      await this.citasService.cargarSlots(Number.parseInt(medico, 10), fecha);
+      if (requestSeq !== this.slotsRequestSeq) {
+        return;
+      }
 
-    this.slots = this.citasService.getSlots();
-    this.slotOcupados = this.citasService.getSlotOcupados();
+      this.slots = this.citasService.getSlots();
+      this.slotOcupados = this.citasService.getSlotOcupados();
 
-    const slotsDisponibles = this.slots.filter(slot => !this.slotOcupados.includes(slot));
-    this.mensajeDisponibilidad = slotsDisponibles.length === 0
-      ? 'No hay horarios disponibles para la fecha seleccionada. Prueba con otro día hábil.'
-      : '';
+      const slotsDisponibles = this.slots.filter(slot => !this.slotOcupados.includes(slot));
+      this.mensajeDisponibilidad = slotsDisponibles.length === 0
+        ? 'No hay horarios disponibles para la fecha seleccionada. Prueba con otro día hábil.'
+        : '';
 
-    if (slotPrevio && slotsDisponibles.includes(slotPrevio)) {
-      this.slotSeleccionado = slotPrevio;
-      this.formCita.hora = slotPrevio;
-    } else {
+      if (slotPrevio && slotsDisponibles.includes(slotPrevio)) {
+        this.slotSeleccionado = slotPrevio;
+        this.formCita.hora = slotPrevio;
+      } else {
+        this.slotSeleccionado = null;
+        this.formCita.hora = '';
+      }
+    } catch {
+      this.slots = [];
+      this.slotOcupados = [];
       this.slotSeleccionado = null;
       this.formCita.hora = '';
+      this.mensajeDisponibilidad = 'No se pudieron cargar los horarios. Verifica la conexión con el backend.';
+    } finally {
+      if (requestSeq === this.slotsRequestSeq) {
+        this.cargandoSlots = false;
+      }
+      this.syncUi();
     }
   }
 
@@ -233,6 +256,7 @@ export class CrearCitaComponent implements OnInit {
       this.mostrarNotificacion('error', 'No se pudo crear la cita. Verifica disponibilidad o conexión con backend.');
     } finally {
       this.guardando = false;
+      this.syncUi();
     }
   }
 
@@ -283,7 +307,10 @@ export class CrearCitaComponent implements OnInit {
     this.toastTimeoutId = setTimeout(() => {
       this.mostrarToast = false;
       this.toastTimeoutId = null;
+      this.syncUi();
     }, 3000);
+
+    this.syncUi();
   }
 
   getNombreMedico(): string {
@@ -420,6 +447,16 @@ export class CrearCitaComponent implements OnInit {
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  private syncUi(): void {
+    this.ngZone.run(() => {
+      try {
+        this.cdr.detectChanges();
+      } catch {
+        // No-op si la vista ya fue destruida.
+      }
+    });
   }
 
   private getYesterdayIso(): string {

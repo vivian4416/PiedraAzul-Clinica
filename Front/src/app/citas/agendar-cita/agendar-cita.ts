@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -41,6 +41,8 @@ export class AgendarCitaComponent implements OnInit {
   constructor(
     private readonly citasService: CitasService,
     private readonly router: Router,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +65,7 @@ export class AgendarCitaComponent implements OnInit {
       this.errorPaciente = 'No fue posible cargar la disponibilidad. Verifica la conexión con el backend.';
     } finally {
       this.cargando = false;
+      this.syncUi();
     }
   }
 
@@ -118,13 +121,15 @@ export class AgendarCitaComponent implements OnInit {
     }
 
     this.guardandoTimeoutId = setTimeout(() => {
-      if (!this.guardando) {
+      if (!this.solicitudEnCurso) {
         return;
       }
       this.guardando = false;
+      this.solicitudEnCurso = false;
       this.errorPaciente = 'La confirmación tardó más de lo esperado. Verifica en la tabla si la cita se creó e intenta recargar.';
       console.warn(`[${traceId}] failsafe: guardando forzado a false por timeout UI`);
       this.guardandoTimeoutId = null;
+      this.syncUi();
     }, 15000);
 
     const medicoId = Number.parseInt(this.medicoSeleccionado, 10);
@@ -138,7 +143,7 @@ export class AgendarCitaComponent implements OnInit {
     // Libera el estado visual del boton inmediatamente.
     this.guardando = false;
 
-    void this.enviarCitaEnSegundoPlano(traceId, {
+    this.enviarCitaEnSegundoPlano(traceId, {
       numDocumento: this.pacienteRegistrado.doc,
       nombres: this.pacienteRegistrado.nombres,
       apellidos: this.pacienteRegistrado.apellidos,
@@ -149,7 +154,17 @@ export class AgendarCitaComponent implements OnInit {
       medicoId,
       fecha,
       hora,
-    }, resumen);
+    }, resumen).catch((err: unknown) => {
+      console.error(`[${traceId}] error inesperado en enviarCitaEnSegundoPlano`, err);
+      if (this.guardandoTimeoutId) {
+        clearTimeout(this.guardandoTimeoutId);
+        this.guardandoTimeoutId = null;
+      }
+      this.solicitudEnCurso = false;
+      this.guardando = false;
+      this.errorPaciente = 'Error inesperado al confirmar. Verifica si la cita fue creada.';
+      this.syncUi();
+    });
   }
 
   async validarPacienteRegistrado(): Promise<void> {
@@ -246,6 +261,7 @@ export class AgendarCitaComponent implements OnInit {
       this.toastTimeoutId = setTimeout(() => {
         this.mostrarToast = false;
         this.toastTimeoutId = null;
+        this.syncUi();
       }, 3200);
 
       this.cancelarSeleccion();
@@ -263,6 +279,7 @@ export class AgendarCitaComponent implements OnInit {
       this.solicitudEnCurso = false;
       this.guardando = false;
       console.debug(`[${traceId}] fin confirmarCita, solicitudEnCurso=false`);
+      this.syncUi();
     }
   }
 
@@ -281,13 +298,24 @@ export class AgendarCitaComponent implements OnInit {
     this.cargando = true;
     try {
       await this.citasService.cargarDiasDisponibles(medicoId, this.semanaSeleccionada);
-      this.diasDisponibles = this.citasService.getDiasDisponibles();
+      this.diasDisponibles = [...this.citasService.getDiasDisponibles()];
     } catch {
       this.diasDisponibles = [];
       this.errorPaciente = 'No se pudo actualizar la disponibilidad para la semana seleccionada.';
     } finally {
       this.cargando = false;
+      this.syncUi();
     }
+  }
+
+  private syncUi(): void {
+    this.ngZone.run(() => {
+      try {
+        this.cdr.detectChanges();
+      } catch {
+        // No-op si la vista ya fue destruida.
+      }
+    });
   }
 
   private getDateOffset(offsetDays: number): Date {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CitasService } from '../services/citas.service';
@@ -18,7 +18,10 @@ export class CitasComponent implements OnInit {
 
   filtroMedico: number = 0;
   filtroFecha: string = new Date().toISOString().slice(0, 10);
+  filtroMedicoPendiente: number = 0;
+  filtroFechaPendiente: string = new Date().toISOString().slice(0, 10);
   cargando = false;
+  aplicandoFiltros = false;
   errorCarga = '';
   
   estadisticas = {
@@ -28,7 +31,11 @@ export class CitasComponent implements OnInit {
     canceladas: 0,
   };
 
-  constructor(private readonly citasService: CitasService) {}
+  constructor(
+    private readonly citasService: CitasService,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     setTimeout(() => {
@@ -51,7 +58,9 @@ export class CitasComponent implements OnInit {
 
       const primerMedico = this.citasService.getMedicos()[0];
       this.filtroMedico = primerMedico ? primerMedico.id : 0;
-      await this.filtrar();
+      this.filtroMedicoPendiente = this.filtroMedico;
+      this.filtroFechaPendiente = this.filtroFecha;
+      await this.aplicarFiltros();
     } catch {
       this.errorCarga = 'No se pudo conectar con el backend. Verifica que springboot-api esté encendido en el puerto 8090.';
       this.citas = [];
@@ -59,17 +68,54 @@ export class CitasComponent implements OnInit {
       this.actualizarEstadisticas();
     } finally {
       this.cargando = false;
+      this.syncUi();
     }
   }
 
-  async filtrar(): Promise<void> {
-    const fecha = this.filtroFecha || new Date().toISOString().slice(0, 10);
-    this.filtroFecha = fecha;
+  onFiltroFechaChange(fecha: string): void {
+    this.filtroFechaPendiente = fecha;
+  }
 
-    await this.citasService.cargarCitasPorFiltro(this.filtroMedico, fecha);
-    this.citas = this.citasService.getCitas();
-    this.citasFiltradas = [...this.citas];
-    this.actualizarEstadisticas();
+  onFiltroMedicoChange(medicoId: number): void {
+    this.filtroMedicoPendiente = medicoId;
+  }
+
+  async aplicarFiltros(): Promise<void> {
+    if (this.aplicandoFiltros) {
+      return;
+    }
+
+    const medicoId = this.filtroMedicoPendiente;
+    const fecha = this.filtroFechaPendiente || new Date().toISOString().slice(0, 10);
+    this.aplicandoFiltros = true;
+    this.errorCarga = '';
+
+    try {
+      await this.citasService.cargarCitasPorFiltro(medicoId, fecha);
+      const citas = this.citasService.getCitas();
+      this.citas = [...citas];
+      this.citasFiltradas = [...citas];
+
+      // Solo refleja el filtro como "aplicado" cuando la data ya fue cargada.
+      this.filtroMedico = medicoId;
+      this.filtroFecha = fecha;
+      this.actualizarEstadisticas();
+    } catch {
+      this.errorCarga = 'No se pudo cargar la tabla con los filtros seleccionados. Intenta nuevamente.';
+    } finally {
+      this.aplicandoFiltros = false;
+      this.syncUi();
+    }
+  }
+
+  private syncUi(): void {
+    this.ngZone.run(() => {
+      try {
+        this.cdr.detectChanges();
+      } catch {
+        // No-op si la vista ya fue destruida.
+      }
+    });
   }
 
   actualizarEstadisticas(): void {

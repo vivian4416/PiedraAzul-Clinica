@@ -40,7 +40,11 @@
             <div class="row g-3">
                 <div class="col-12 col-md-3">
                     <label for="filtro-medico" class="form-label">Médico</label>
-                    <select id="filtro-medico" class="form-control" [(ngModel)]="filtroMedico" (change)="filtrar()">
+                    <select
+                        id="filtro-medico"
+                        class="form-control"
+                        [(ngModel)]="filtroMedicoPendiente"
+                        (ngModelChange)="onFiltroMedicoChange($event)">
                         <option *ngFor="let medico of medicosOptions" [ngValue]="medico.id">
                             {{ medico.nombre }}
                         </option>
@@ -48,13 +52,17 @@
                 </div>
                 <div class="col-12 col-md-3">
                     <label for="filtro-fecha" class="form-label">Fecha</label>
-                    <input type="date" id="filtro-fecha" class="form-control" [(ngModel)]="filtroFecha"
-                        (change)="filtrar()">
+                    <input
+                        type="date"
+                        id="filtro-fecha"
+                        class="form-control"
+                        [(ngModel)]="filtroFechaPendiente"
+                        (ngModelChange)="onFiltroFechaChange($event)">
                 </div>
                 <div class="col-12 col-md-6">
                     <div class="form-label d-block" aria-hidden="true"></div>
-                    <button class="btn btn-primary me-2" (click)="filtrar()">
-                        <i class="bi bi-funnel"></i> Aplicar filtros
+                    <button class="btn btn-primary me-2" [disabled]="aplicandoFiltros || cargando" (click)="aplicarFiltros()">
+                        <i class="bi bi-funnel"></i> {{ aplicandoFiltros ? 'Aplicando...' : 'Aplicar filtros' }}
                     </button>
                     <button class="btn btn-outline-secondary" (click)="exportarCSV()">
                         <i class="bi bi-download"></i> Exportar CSV
