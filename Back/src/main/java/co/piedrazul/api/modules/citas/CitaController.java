@@ -4,6 +4,8 @@ import co.piedrazul.api.security.AuthUser;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/citas")
 public class CitaController {
+  private static final Logger log = LoggerFactory.getLogger(CitaController.class);
   private final CitaService citaService;
 
   public CitaController(CitaService citaService) {
@@ -49,5 +52,19 @@ public class CitaController {
     AuthUser user = (AuthUser) authentication.getPrincipal();
     CitaCreadaResponse data = citaService.crearManual(request, user.id(), "MANUAL");
     return Map.of("ok", true, "message", "Cita creada exitosamente", "data", data);
+  }
+
+  @PostMapping("/autonoma")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR','PACIENTE')")
+  public Map<String, Object> crearAutonoma(@Valid @RequestBody CrearCitaRequest request, Authentication authentication) {
+    long startedAt = System.currentTimeMillis();
+    AuthUser user = (AuthUser) authentication.getPrincipal();
+    log.info("[RF3] iniciar crearAutonoma userId={} rol={} medicoId={} fecha={} hora={}",
+      user.id(), user.role(), request.medicoId(), request.fecha(), request.hora());
+
+    CitaCreadaResponse data = citaService.crearAutonoma(request, user.id());
+
+    log.info("[RF3] fin crearAutonoma citaId={} elapsedMs={}", data.citaId(), (System.currentTimeMillis() - startedAt));
+    return Map.of("ok", true, "message", "Cita web creada exitosamente", "data", data);
   }
 }

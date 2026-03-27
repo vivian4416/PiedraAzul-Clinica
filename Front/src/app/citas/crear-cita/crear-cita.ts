@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CitasService } from '../../services/citas.service';
 import { Medico, Paciente } from '../../models/cita.model';
 
@@ -11,6 +12,8 @@ import { Medico, Paciente } from '../../models/cita.model';
   styleUrl: './crear-cita.css',
 })
 export class CrearCitaComponent implements OnInit {
+  modoActual: 'paciente' | 'agendador' = 'agendador';
+
   medicos: Medico[] = [];
   slots: string[] = [];
   slotOcupados: string[] = [];
@@ -59,7 +62,10 @@ export class CrearCitaComponent implements OnInit {
   guardando = false;
   private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private readonly citasService: CitasService) {}
+  constructor(
+    private readonly citasService: CitasService,
+    private readonly router: Router,
+  ) {}
 
   ngOnInit(): void {
     void this.cargarInicial();
@@ -195,6 +201,8 @@ export class CrearCitaComponent implements OnInit {
       return;
     }
 
+    this.mostrarNotificacion('success', 'Formulario válido. Cita registrada exitosamente.');
+
     try {
       const horaSeleccionada = this.slotSeleccionado;
       if (!horaSeleccionada) {
@@ -315,6 +323,11 @@ export class CrearCitaComponent implements OnInit {
 
   puedeCrearCita(): boolean {
     return this.formularioValido();
+  }
+
+  irModoPaciente(): void {
+    this.modoActual = 'paciente';
+    void this.router.navigate(['/agendar-cita']);
   }
 
   private formularioValido(): boolean {

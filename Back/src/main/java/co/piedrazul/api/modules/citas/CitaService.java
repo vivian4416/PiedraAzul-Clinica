@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CitaService {
+  private static final Logger log = LoggerFactory.getLogger(CitaService.class);
   private final CitaRepository citaRepository;
   private final MedicoService medicoService;
   private final PacienteService pacienteService;
@@ -94,6 +97,16 @@ public class CitaService {
 
   @Transactional
   public CitaCreadaResponse crearManual(CrearCitaRequest req, Long creadoPor, String origen) {
+    return crear(req, creadoPor, origen, false);
+  }
+
+  @Transactional
+  public CitaCreadaResponse crearAutonoma(CrearCitaRequest req, Long creadoPor) {
+    return crear(req, creadoPor, "AUTONOMA", true);
+  }
+
+  private CitaCreadaResponse crear(CrearCitaRequest req, Long creadoPor, String origen, boolean exigirPacienteRegistrado) {
+    long startedAt = System.currentTimeMillis();
     Medico medico = medicoService.obtenerActivoOFallar(req.medicoId());
     MedicoDisponibilidad disp = medicoService.getDisponibilidadParaFecha(req.medicoId(), req.fecha());
 
@@ -114,13 +127,32 @@ public class CitaService {
       throw new AppException(HttpStatus.CONFLICT, "CONFLICT", valid.razon());
     }
 
-    FindOrCreateResult paciente = pacienteService.findOrCreate(new PacienteInput(
-      req.numDocumento(), req.nombres(), req.apellidos(), req.celular(), req.genero(), req.fechaNacimiento(), req.email()
-    ));
+    Paciente paciente;
+    boolean pacienteCreado;
+    if (exigirPacienteRegistrado) {
+      Paciente existente = pacienteService.buscarPorDocumento(req.numDocumento().trim());
+      if (existente == null) {
+        throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Debes tener un registro de paciente para agendar por la web");
+      }
+
+      String celularRequest = req.celular() == null ? "" : req.celular().trim();
+      if (!existente.getCelular().equals(celularRequest)) {
+        throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "Los datos de paciente no coinciden con el registro");
+      }
+
+      paciente = existente;
+      pacienteCreado = false;
+    } else {
+      FindOrCreateResult creado = pacienteService.findOrCreate(new PacienteInput(
+        req.numDocumento(), req.nombres(), req.apellidos(), req.celular(), req.genero(), req.fechaNacimiento(), req.email()
+      ));
+      paciente = creado.paciente();
+      pacienteCreado = creado.esNuevo();
+    }
 
     Cita cita = new Cita();
     cita.setMedicoId(req.medicoId());
-    cita.setPacienteId(paciente.paciente().getId());
+    cita.setPacienteId(paciente.getId());
     cita.setCreadoPor(creadoPor);
     cita.setFechaHora(fechaHora);
     cita.setEstado("CONFIRMADA");
@@ -132,7 +164,11 @@ public class CitaService {
       throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "El slot fue tomado en este momento, intenta otro");
     }
 
-    eventPublisher.publishEvent(new CitaCreadaEvent(cita.getId(), cita.getMedicoId(), creadoPor, paciente.esNuevo()));
-    return new CitaCreadaResponse(cita.getId(), paciente.esNuevo());
+    log.info("[RF3] cita persistida citaId={} medicoId={} pacienteId={} elapsedMs={}",
+      cita.getId(), cita.getMedicoId(), cita.getPacienteId(), (System.currentTimeMillis() - startedAt));
+
+    eventPublisher.publishEvent(new CitaCreadaEvent(cita.getId(), cita.getMedicoId(), creadoPor, pacienteCreado));
+    log.info("[RF3] evento publicado citaId={} elapsedMs={}", cita.getId(), (System.currentTimeMillis() - startedAt));
+    return new CitaCreadaResponse(cita.getId(), pacienteCreado);
   }
 }

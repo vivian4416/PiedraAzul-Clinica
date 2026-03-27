@@ -31,7 +31,9 @@ export class CitasComponent implements OnInit {
   constructor(private readonly citasService: CitasService) {}
 
   ngOnInit(): void {
-    void this.cargarInicial();
+    setTimeout(() => {
+      void this.cargarInicial();
+    }, 0);
   }
 
   private async cargarInicial(): Promise<void> {

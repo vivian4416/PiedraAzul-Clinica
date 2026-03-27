@@ -163,8 +163,7 @@
               [class.is-invalid]="mostrarError('fecha')"
               [min]="hoyIso"
               [(ngModel)]="formCita.fecha"
-              (input)="onFechaCitaInput($event)"
-              (change)="onFechaCitaInput($event)">
+              (input)="onFechaCitaInput($event)">
             <div *ngIf="mensajeError('fecha')" class="error-msg">{{ mensajeError('fecha') }}</div>
           </div>
 
@@ -220,5 +219,10 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="modo-selector" aria-label="Selector de modo">
+    <button type="button" class="modo-chip" (click)="irModoPaciente()">Paciente</button>
+    <button type="button" class="modo-chip active">Agendador</button>
   </div>
 </div>

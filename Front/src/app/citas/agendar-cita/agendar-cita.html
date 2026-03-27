@@ -1,67 +1,153 @@
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-12 col-lg-8">
-      <!-- INDICADORES DE SEMANA -->
-      <div class="semanas-container mb-5">
-        <button 
-          *ngFor="let i of [1,2,3]"
-          class="semana-btn"
-          [class.semana-activa]="semanaSeleccionada === i"
-          (click)="seleccionarSemana(i)">
-          Semana {{ i }}
-        </button>
+<div class="container py-5 agendar-page">
+  <div class="agendar-wrap">
+    <div *ngIf="mostrarToast" class="toast toast-success show mb-3" role="alert">
+      <i class="bi bi-check-circle-fill"></i>
+      {{ mensajeToast }}
+    </div>
+
+    <div class="steps mb-4">
+      <div class="step done">
+        <div class="step-num">✓</div>
+        <div class="step-label">Registro</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step active">
+        <div class="step-num">2</div>
+        <div class="step-label">Médico y fecha</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" [class.done]="mostrarConfirmacion">
+        <div class="step-num">3</div>
+        <div class="step-label">Agendar web</div>
+      </div>
+    </div>
+
+    <div class="card selector-card mb-3">
+      <div class="card-title">Paciente registrado</div>
+      <div class="disponibilidad-subtitle">Para agendar por la web debes validar tus datos de registro.</div>
+
+      <div class="row g-2">
+        <div class="col-12 col-md-5">
+          <label for="doc-paciente" class="form-label">Documento</label>
+          <input
+            id="doc-paciente"
+            type="text"
+            class="form-control"
+            placeholder="Ej: 79453201"
+            [(ngModel)]="documentoPaciente">
+        </div>
+        <div class="col-12 col-md-5">
+          <label for="cel-paciente" class="form-label">Celular</label>
+          <input
+            id="cel-paciente"
+            type="text"
+            class="form-control"
+            placeholder="10 dígitos"
+            [(ngModel)]="celularPaciente">
+        </div>
+        <div class="col-12 col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-primary w-100" (click)="validarPacienteRegistrado()">Validar</button>
+        </div>
       </div>
 
-      <!-- DISPONIBILIDAD DE SLOTS -->
-      <div class="card mb-5">
-        <div class="card-header">
-          <h5 class="mb-0">Selecciona tu horario preferido</h5>
+      <div *ngIf="pacienteRegistrado" class="registro-ok mt-3">
+        <i class="bi bi-check-circle-fill"></i>
+        Paciente validado: {{ pacienteRegistrado.nombres }} {{ pacienteRegistrado.apellidos }}
+      </div>
+      <div *ngIf="errorPaciente" class="registro-error mt-3">{{ errorPaciente }}</div>
+    </div>
+
+    <div class="card selector-card mb-3">
+      <div class="especialidad-head">
+        <div class="icon-badge">
+          <i class="bi bi-heart-pulse"></i>
         </div>
-        <div class="card-body">
-          <div *ngFor="let dia of diasArray" class="dia-slots-container">
-            <div class="dia-titulo">{{ dia }}</div>
-            <div class="slots-grid">
-              <button 
-                *ngFor="let hora of diasDisponibles[dia]"
-                class="slot-btn"
-                [class.slot-seleccionado]="slotSeleccionado?.dia === dia && slotSeleccionado?.hora === hora"
-                (click)="seleccionarSlot(dia, hora)">
-                {{ hora }}
-              </button>
-            </div>
-          </div>
+        <div>
+          <div class="title">Quiropráctica</div>
+          <div class="subtitle">Especialidad seleccionada</div>
         </div>
+        <button type="button" class="btn btn-sm btn-ghost" disabled>Cambiar</button>
       </div>
 
-      <!-- TARJETA DE CONFIRMACIÓN -->
-      <div *ngIf="mostrarConfirmacion && slotSeleccionado" class="card card-confirm">
-        <div class="card-body">
-          <div class="confirm-content">
-            <h5>
-              <i class="bi bi-check-circle text-success"></i>
-              Cita Confirmada
-            </h5>
-            <div class="confirm-details mt-4">
-              <div class="detail-row">
-                <span class="detail-label">Fecha y Hora:</span>
-                <span class="detail-valor">{{ slotSeleccionado.dia }} a las {{ slotSeleccionado.hora }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Médico:</span>
-                <span class="detail-valor">{{ getNombreMedico() }}</span>
-              </div>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-lg w-100 mt-4" (click)="confirmarCita()">
-            <i class="bi bi-calendar-check"></i> Confirmar Cita
-          </button>
-          <button 
-            class="btn btn-outline-secondary btn-lg w-100 mt-2"
-            (click)="slotSeleccionado = null; mostrarConfirmacion = false">
-            Cancelar
+      <div class="field mt-3">
+        <label for="medico-paciente">Médico o terapista</label>
+        <select
+          id="medico-paciente"
+          class="form-control"
+          [(ngModel)]="medicoSeleccionado"
+          (ngModelChange)="onMedicoChange($event)">
+          <option value="">Seleccionar...</option>
+          <option *ngFor="let medico of medicos" [value]="medico.id">
+            Dr/Dra. {{ medico.nombre }} {{ medico.apellido }}
+          </option>
+        </select>
+      </div>
+
+      <div class="field mb-0">
+        <div class="field-label">Semana disponible</div>
+        <div class="semanas-btns">
+          <button
+            type="button"
+            *ngFor="let semana of semanasDisponibles"
+            class="btn btn-sm"
+            [class.active]="semanaSeleccionada === semana"
+            (click)="seleccionarSemana(semana)">
+            {{ getSemanaLabel(semana) }}
           </button>
         </div>
       </div>
     </div>
+
+    <div class="card disponibilidad-card mb-3">
+      <div class="card-title">Horarios disponibles</div>
+      <div class="disponibilidad-subtitle">{{ getSubtituloDisponibilidad() }}</div>
+
+      <div *ngIf="cargando" class="empty-state">Cargando disponibilidad...</div>
+
+      <div *ngIf="!cargando && diasDisponibles.length === 0" class="empty-state">
+        No hay horarios disponibles para esta selección.
+      </div>
+
+      <div *ngIf="!cargando">
+        <div *ngFor="let dia of diasDisponibles" class="dia-slots-container">
+          <div class="dia-titulo">{{ dia.label }}</div>
+          <div class="slots-grid">
+            <button
+              type="button"
+              *ngFor="let hora of dia.horas"
+              class="slot-btn"
+              [class.slot-seleccionado]="slotSeleccionado?.label === dia.label && slotSeleccionado?.hora === hora"
+              (click)="seleccionarSlot(dia, hora)">
+              {{ hora }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="mostrarConfirmacion && slotSeleccionado" class="card confirm-card mb-3">
+      <div class="confirm-row">
+        <div class="confirm-icon">
+          <i class="bi bi-check-lg"></i>
+        </div>
+        <div>
+          <div class="confirm-title">Cita seleccionada</div>
+          <div class="confirm-subtitle">{{ slotSeleccionado.label }} a las {{ slotSeleccionado.hora }} · {{ getNombreMedico() }}</div>
+        </div>
+        <button type="button" class="btn btn-primary" [disabled]="!puedeConfirmar()" (click)="confirmarCita()">
+          {{ solicitudEnCurso ? 'Enviando...' : 'Confirmar cita' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>Nota:</strong> Esta cita se guarda con origen <strong>Web</strong> y aparece en la tabla de citas del agendador.
+      <button type="button" class="btn btn-sm btn-ghost ms-2" (click)="cancelarSeleccion()">Limpiar selección</button>
+    </div>
+  </div>
+
+  <div class="modo-selector" aria-label="Selector de modo">
+    <button type="button" class="modo-chip active">Paciente</button>
+    <button type="button" class="modo-chip" (click)="irModoAgendador()">Agendador</button>
   </div>
 </div>

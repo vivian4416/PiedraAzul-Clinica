@@ -1,6 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, timeout } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { Cita, Paciente, Medico } from '../models/cita.model';
 
@@ -65,6 +65,12 @@ interface BackendSlotsResponse {
   ocupados: number;
 }
 
+export interface DiaDisponible {
+  fecha: string;
+  label: string;
+  horas: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -74,6 +80,7 @@ export class CitasService {
 
   private readonly apiBase = 'http://localhost:8090/api/v1';
   private readonly defaultLogin = { login: 'agendadora', password: atob('QWRtaW4xMjMh') };
+  private readonly requestTimeoutMs = 12000;
 
   private token: string | null = null;
   private authPromise: Promise<void> | null = null;
@@ -86,7 +93,7 @@ export class CitasService {
   private readonly medicosSubject = new BehaviorSubject<Medico[]>([]);
   private readonly slotsBaseSubject = new BehaviorSubject<string[]>([]);
   private readonly ocupadosSubject = new BehaviorSubject<string[]>([]);
-  private readonly diasDisponiblesSubject = new BehaviorSubject<{ [key: string]: string[] }>({});
+  private readonly diasDisponiblesSubject = new BehaviorSubject<DiaDisponible[]>([]);
 
   citas$ = this.citasSubject.asObservable();
   pacientes$ = this.pacientesSubject.asObservable();
@@ -187,14 +194,14 @@ export class CitasService {
       return;
     }
 
-    const dias: { [key: string]: string[] } = {};
+    const dias: DiaDisponible[] = [];
     const inicio = new Date();
     inicio.setDate(inicio.getDate() + (semanaOffset * 7));
 
     for (let i = 0; i < 5; i++) {
       const fecha = new Date(inicio);
       fecha.setDate(inicio.getDate() + i);
-      const fechaIso = fecha.toISOString().slice(0, 10);
+      const fechaIso = this.toLocalIsoDate(fecha);
 
       const params = new HttpParams()
         .set('medicoId', String(medicoId))
@@ -204,7 +211,11 @@ export class CitasService {
         const data = await this.getApi<BackendSlotsResponse>('/citas/slots', params);
         const disponibles = (data.slots ?? []).filter(s => s.disponible).map(s => s.hora);
         if (disponibles.length > 0) {
-          dias[this.formatDiaLabel(fecha)] = disponibles;
+          dias.push({
+            fecha: fechaIso,
+            label: this.formatDiaLabel(fecha),
+            horas: disponibles,
+          });
         }
       } catch {
         // Si no hay disponibilidad en un dia, se omite del tablero.
@@ -232,7 +243,11 @@ export class CitasService {
     const params = new HttpParams().set('documento', trimmed);
 
     try {
-      const data = await this.getApi<BackendPaciente>('/pacientes', params);
+      const data = await this.getApi<BackendPaciente | null>('/pacientes', params);
+      if (!data) {
+        return undefined;
+      }
+
       const mapped: Paciente = {
         doc: data.numDocumento,
         nombres: data.nombres,
@@ -293,6 +308,45 @@ export class CitasService {
     })();
   }
 
+  async crearCitaAutonoma(payload: {
+    numDocumento: string;
+    nombres: string;
+    apellidos: string;
+    celular: string;
+    genero: string;
+    fechaNacimiento?: string;
+    email?: string;
+    medicoId: number;
+    fecha: string;
+    hora: string;
+  }): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    await this.postApi('/citas/autonoma', {
+      numDocumento: payload.numDocumento.trim(),
+      nombres: payload.nombres.trim(),
+      apellidos: payload.apellidos.trim(),
+      celular: payload.celular.trim(),
+      genero: this.toBackendGenero(payload.genero),
+      fechaNacimiento: payload.fechaNacimiento || null,
+      email: payload.email || null,
+      medicoId: payload.medicoId,
+      fecha: payload.fecha,
+      hora: payload.hora,
+    });
+
+    void (async () => {
+      try {
+        await this.cargarCitasPorFiltro(payload.medicoId, payload.fecha);
+        await this.cargarSlots(payload.medicoId, payload.fecha);
+      } catch {
+        // Si falla la recarga post-creacion, no invalida la cita ya creada.
+      }
+    })();
+  }
+
   getCitas(): Cita[] {
     return this.citasSubject.value;
   }
@@ -342,7 +396,7 @@ export class CitasService {
     return this.ocupadosSubject.value;
   }
 
-  getDiasDisponibles(): { [key: string]: string[] } {
+  getDiasDisponibles(): DiaDisponible[] {
     return this.diasDisponiblesSubject.value;
   }
 
@@ -376,12 +430,14 @@ export class CitasService {
     }
 
     this.authPromise ??= (async () => {
+      console.debug('[CitasService] login tecnico iniciado');
       const auth = await firstValueFrom(this.http.post<AuthResponse>(
         `${this.apiBase}/auth/login`,
         this.defaultLogin
-      ));
+      ).pipe(timeout(this.requestTimeoutMs)));
 
       this.token = auth.token;
+      console.debug('[CitasService] login tecnico completado');
     })().finally(() => {
       this.authPromise = null;
     });
@@ -394,15 +450,20 @@ export class CitasService {
     const response = await firstValueFrom(this.http.get<ApiResponse<T>>(`${this.apiBase}${path}`, {
       headers: this.buildHeaders(),
       params,
-    }));
+    }).pipe(timeout(this.requestTimeoutMs)));
     return response.data;
   }
 
   private async postApi<T = unknown>(path: string, body: unknown): Promise<T> {
     await this.ensureAuthenticated();
+    const startedAt = Date.now();
     const response = await firstValueFrom(this.http.post<ApiResponse<T>>(`${this.apiBase}${path}`, body, {
       headers: this.buildHeaders(),
-    }));
+    }).pipe(timeout(this.requestTimeoutMs)));
+    const elapsed = Date.now() - startedAt;
+    if (path === '/citas/autonoma') {
+      console.debug(`[CitasService] POST ${path} completado en ${elapsed}ms`);
+    }
     return response.data;
   }
 
@@ -414,7 +475,14 @@ export class CitasService {
   }
 
   private getTodayIso(): string {
-    return new Date().toISOString().slice(0, 10);
+    return this.toLocalIsoDate(new Date());
+  }
+
+  private toLocalIsoDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private formatDiaLabel(fecha: Date): string {
