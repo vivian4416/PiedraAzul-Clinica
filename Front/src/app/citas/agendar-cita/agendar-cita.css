@@ -20,7 +20,8 @@
 
 .semana-btn:hover {
   border-color: #1b4f72;
-  color: #1b4f72;
+  background-color: #1b4f72;
+  color: #ffffff;
 }
 
 .semana-activa {
@@ -60,9 +61,10 @@
   border-radius: 6px;
   background-color: white;
   color: #333;
-  font-family: 'SFMono-Regular', 'Courier New', monospace;
+  font-family: 'Courier Prime', 'Inconsolata', 'Courier New', monospace;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;

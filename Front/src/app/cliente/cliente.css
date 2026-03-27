@@ -10,7 +10,7 @@
 .carousel-wrapper {
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 12px 40px #0e6b7c;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 .carousel-item { position: relative; }
 .carousel-item img {
@@ -50,7 +50,7 @@
 .sidebar-card {
   background: white;
   border-radius: 14px;
-  box-shadow: 0 4px 20px #0e6b7c;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 .sidebar-card .sidebar-head {
@@ -91,6 +91,16 @@
   padding: .9rem 1rem;
 }
 
+.especialidades-title {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary-md);
+  margin: 0 0 .45rem 0;
+  opacity: 0.75;
+}
+
 .doctor-card {
   border: 1px solid #e2eef1;
   border-radius: 14px;
@@ -100,7 +110,7 @@
 }
 .doctor-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 14px 36px #0e6b7c;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.13);
 }
 .doctor-card .card-img-wrap {
   position: relative;
@@ -117,13 +127,15 @@
 .doctor-card .specialty-badge {
   position: absolute;
   top: .6rem; right: .6rem;
-  background: var(--accent);
-  color: var(--text-muted);
+  background: rgba(15, 40, 70, 0.82);
+  color: #ffffff;
   font-size: .65rem;
   font-weight: 700;
   text-transform: uppercase;
   padding: .2rem .55rem;
   border-radius: 50px;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(4px);
 }
 .doctor-card .card-body { padding: 1rem; }
 .doctor-card .card-title { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
@@ -142,7 +154,7 @@
 .form-section {
   background: white;
   border-radius: 18px;
-  box-shadow: 0 6px 30px #0e6b7c;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
   padding: 2.5rem;
 }
 .form-control, .form-select {
