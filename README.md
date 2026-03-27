@@ -8,7 +8,7 @@ Incluye:
 
 ## Estado actual del sistema
 
-Se cubren los 3 flujos funcionales principales:
+Se cubren los 4 flujos funcionales principales:
 
 1. RF1 - Listar citas por medico y fecha
 - Vista de tabla con filtros por medico y fecha.
@@ -22,6 +22,13 @@ Se cubren los 3 flujos funcionales principales:
 - Validacion de paciente registrado por documento/celular.
 - Consulta de franjas disponibles por medico y semana.
 - Creacion de cita con origen web (AUTONOMA).
+
+4. RF4 - Configuracion de agenda (administrador/agendador)
+- Configuracion de ventana de agendamiento en semanas.
+- Configuracion de dias de atencion por medico/terapista.
+- Configuracion de franja horaria por dia para cada medico/terapista.
+- Configuracion de intervalo de minutos entre citas por medico/terapista.
+- Activacion/inactivacion de medicos o terapistas para agendamiento.
 
 ## Estructura del proyecto
 
@@ -102,6 +109,8 @@ Pacientes:
 
 Medicos:
 - GET /api/v1/medicos
+- GET /api/v1/medicos/configuracion
+- PUT /api/v1/medicos/configuracion
 
 ## Seguridad y autenticacion
 
