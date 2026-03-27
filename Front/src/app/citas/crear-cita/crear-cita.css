@@ -230,6 +230,36 @@
   padding: 24px;
 }
 
+.modo-selector {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 25;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  padding: 6px;
+}
+
+.modo-chip {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #5f6770;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+.modo-chip.active {
+  background: #1b4f72;
+  color: #fff;
+}
+
 /* ICONOS */
 i.bi {
   margin-right: 6px;
@@ -252,5 +282,12 @@ i.bi {
 
   .resumen-label {
     margin-bottom: 4px;
+  }
+
+  .modo-selector {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    justify-content: space-between;
   }
 }
