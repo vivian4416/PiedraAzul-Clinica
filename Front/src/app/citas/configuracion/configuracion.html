@@ -76,7 +76,7 @@
             </div>
           </div>
 
-          <label class="form-label">Dias de atencion</label>
+          <div class="form-label">Dias de atencion</div>
           <div class="dias-container mb-4">
             <button
               type="button"
@@ -119,11 +119,14 @@
             </table>
           </div>
 
-          <button class="btn btn-primary" [disabled]="guardando" (click)="guardarConfiguracion()">
+          <button class="btn btn-primary" [disabled]="guardando || cargando" (click)="guardarConfiguracion()">
+            <i *ngIf="!guardando" class="bi bi-save"></i>
+            <i *ngIf="guardando" class="bi bi-hourglass-split"></i>
             {{ guardando ? 'Guardando...' : 'Guardar configuracion' }}
           </button>
 
-          <div *ngIf="mensaje" class="mt-3" [ngClass]="tipoMensaje === 'ok' ? 'text-success' : 'text-danger'">
+          <div *ngIf="mensaje" class="mt-3 alert" [ngClass]="tipoMensaje === 'ok' ? 'alert-success' : 'alert-danger'" role="alert">
+            <i [ngClass]="tipoMensaje === 'ok' ? 'bi bi-check-circle' : 'bi bi-exclamation-circle'" class="me-2"></i>
             {{ mensaje }}
           </div>
         </div>

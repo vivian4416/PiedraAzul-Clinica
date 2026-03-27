@@ -1,4 +1,5 @@
 .vscode/
+Front/.angular/
 Front/node_modules/
 target/
 *.class

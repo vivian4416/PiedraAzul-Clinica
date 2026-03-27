@@ -45,9 +45,6 @@ public class MedicoService {
   public MedicoDisponibilidad getDisponibilidadParaFecha(Long medicoId, LocalDate fecha) {
     DayOfWeek day = fecha.getDayOfWeek();
     int dia = day.getValue();
-    if (dia > 5) {
-      return null;
-    }
     return disponibilidadRepository.findByMedicoIdAndDiaSemana(medicoId, dia).orElse(null);
   }
 

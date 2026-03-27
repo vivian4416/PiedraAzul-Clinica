@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -47,8 +47,13 @@ export class ConfiguracionComponent implements OnInit {
   guardando = false;
   mensaje = '';
   tipoMensaje: 'ok' | 'error' = 'ok';
+  private mensajeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private readonly citasService: CitasService) {}
+  constructor(
+    private readonly citasService: CitasService,
+    private readonly ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     void this.cargarInicial();
@@ -67,6 +72,7 @@ export class ConfiguracionComponent implements OnInit {
       this.mensaje = 'No fue posible cargar la configuracion. Verifica conexion con el backend.';
     } finally {
       this.cargando = false;
+      this.syncUi();
     }
   }
 
@@ -150,17 +156,41 @@ export class ConfiguracionComponent implements OnInit {
       this.aplicarConfiguracion(configGuardada, medicoEditando.id);
       this.tipoMensaje = 'ok';
       this.mensaje = 'Configuracion guardada exitosamente.';
+      this.scheduleMessageClear();
     } catch {
       this.tipoMensaje = 'error';
       this.mensaje = 'No fue posible guardar la configuracion en el backend.';
     } finally {
       this.guardando = false;
+      this.syncUi();
     }
   }
 
   getNombreMedicoSeleccionado(): string {
     const medico = this.medicos.find(m => m.id === this.medicoSeleccionadoId);
     return medico ? `${medico.nombres} - ${medico.especialidad}` : 'Selecciona un medico o terapista';
+  }
+
+  private scheduleMessageClear(): void {
+    if (this.mensajeTimeoutId) {
+      clearTimeout(this.mensajeTimeoutId);
+      this.mensajeTimeoutId = null;
+    }
+    this.mensajeTimeoutId = setTimeout(() => {
+      this.mensaje = '';
+      this.mensajeTimeoutId = null;
+      this.syncUi();
+    }, 4000);
+  }
+
+  private syncUi(): void {
+    this.ngZone.run(() => {
+      try {
+        this.cdr.detectChanges();
+      } catch {
+        // No-op si la vista ya fue destruida.
+      }
+    });
   }
 
   private aplicarConfiguracion(configuracion: ConfiguracionAgendamiento, medicoPreferidoId?: number): void {
