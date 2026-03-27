@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CitaService {
   private static final Logger log = LoggerFactory.getLogger(CitaService.class);
   private final CitaRepository citaRepository;
+  private final ConfiguracionCitasService configuracionCitasService;
   private final MedicoService medicoService;
   private final PacienteService pacienteService;
   private final PacienteRepository pacienteRepository;
@@ -35,12 +36,14 @@ public class CitaService {
   private final ApplicationEventPublisher eventPublisher;
 
   public CitaService(CitaRepository citaRepository,
+                     ConfiguracionCitasService configuracionCitasService,
                      MedicoService medicoService,
                      PacienteService pacienteService,
                      PacienteRepository pacienteRepository,
                      SlotService slotService,
                      ApplicationEventPublisher eventPublisher) {
     this.citaRepository = citaRepository;
+    this.configuracionCitasService = configuracionCitasService;
     this.medicoService = medicoService;
     this.pacienteService = pacienteService;
     this.pacienteRepository = pacienteRepository;
@@ -107,6 +110,7 @@ public class CitaService {
 
   private CitaCreadaResponse crear(CrearCitaRequest req, Long creadoPor, String origen, boolean exigirPacienteRegistrado) {
     long startedAt = System.currentTimeMillis();
+    validarFechaEnVentana(req.fecha());
     Medico medico = medicoService.obtenerActivoOFallar(req.medicoId());
     MedicoDisponibilidad disp = medicoService.getDisponibilidadParaFecha(req.medicoId(), req.fecha());
 
@@ -170,5 +174,19 @@ public class CitaService {
     eventPublisher.publishEvent(new CitaCreadaEvent(cita.getId(), cita.getMedicoId(), creadoPor, pacienteCreado));
     log.info("[RF3] evento publicado citaId={} elapsedMs={}", cita.getId(), (System.currentTimeMillis() - startedAt));
     return new CitaCreadaResponse(cita.getId(), pacienteCreado);
+  }
+
+  private void validarFechaEnVentana(LocalDate fecha) {
+    int ventanaSemanas = configuracionCitasService.getVentanaSemanas();
+    LocalDate hoy = LocalDate.now();
+    LocalDate maxFecha = hoy.plusWeeks(ventanaSemanas);
+
+    if (fecha.isBefore(hoy) || fecha.isAfter(maxFecha)) {
+      throw new AppException(
+        HttpStatus.BAD_REQUEST,
+        "BAD_REQUEST",
+        "La fecha seleccionada esta fuera de la ventana habilitada de agendamiento"
+      );
+    }
   }
 }

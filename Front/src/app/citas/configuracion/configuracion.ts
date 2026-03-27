@@ -1,15 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CitasService } from '../../services/citas.service';
-import { Medico } from '../../models/cita.model';
+import {
+  CitasService,
+  ConfiguracionAgendamiento,
+  MedicoConfiguracion,
+} from '../../services/citas.service';
 
-interface MedicoConfig {
+interface DiaSemanaItem {
   id: number;
   nombre: string;
-  apellido: string;
-  especialidad: string;
+  corto: string;
+}
+
+interface DisponibilidadEditor {
   activo: boolean;
+  horaInicio: string;
+  horaFin: string;
 }
 
 @Component({
@@ -19,38 +26,27 @@ interface MedicoConfig {
   styleUrl: './configuracion.css',
 })
 export class ConfiguracionComponent implements OnInit {
-  diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-  diasActivos: { [key: string]: boolean } = {
-    Lunes: true,
-    Martes: true,
-    Miércoles: true,
-    Jueves: true,
-    Viernes: true,
-    Sábado: false,
-    Domingo: false,
-  };
-
-  configuracion = {
-    horaInicio: '08:00',
-    horaFin: '18:00',
-    intervaloSlot: 20,
-    sitio: 'Popayán',
-    ubicacion: 'Calle 5 # 3-25',
-  };
-
-  medicos: MedicoConfig[] = [
-    { id: 1, nombre: 'Dr. Andrés', apellido: 'Mora', especialidad: 'Quiropraxia', activo: true },
-    { id: 2, nombre: 'Dra. Carolina', apellido: 'Ríos', especialidad: 'Fisioterapia', activo: true },
-    { id: 3, nombre: 'Dr. Luis', apellido: 'Pérez', especialidad: 'Terapia Neural', activo: true },
+  readonly diasSemana: DiaSemanaItem[] = [
+    { id: 1, nombre: 'Lunes', corto: 'Lun' },
+    { id: 2, nombre: 'Martes', corto: 'Mar' },
+    { id: 3, nombre: 'Miercoles', corto: 'Mie' },
+    { id: 4, nombre: 'Jueves', corto: 'Jue' },
+    { id: 5, nombre: 'Viernes', corto: 'Vie' },
+    { id: 6, nombre: 'Sabado', corto: 'Sab' },
+    { id: 7, nombre: 'Domingo', corto: 'Dom' },
   ];
 
-  mostrarFormMedico = false;
-  medicoEditando: any = null;
-  formularioMedico = {
-    nombre: '',
-    apellido: '',
-    especialidad: '',
-  };
+  ventanaSemanas = 4;
+  medicos: MedicoConfiguracion[] = [];
+  medicoSeleccionadoId: number | null = null;
+  medicoActivo = true;
+  intervaloSlot = 20;
+  disponibilidadEditor: Record<number, DisponibilidadEditor> = {};
+
+  cargando = false;
+  guardando = false;
+  mensaje = '';
+  tipoMensaje: 'ok' | 'error' = 'ok';
 
   constructor(private readonly citasService: CitasService) {}
 
@@ -59,82 +55,142 @@ export class ConfiguracionComponent implements OnInit {
   }
 
   private async cargarInicial(): Promise<void> {
-    await this.citasService.inicializar();
-    const medicosBackend = this.citasService.getMedicos();
-    if (medicosBackend.length > 0) {
-      this.medicos = medicosBackend.map((m: Medico) => ({
-        id: m.id,
-        nombre: m.nombre,
-        apellido: m.apellido,
-        especialidad: m.especialidad,
-        activo: true,
-      }));
+    this.cargando = true;
+    this.mensaje = '';
+
+    try {
+      await this.citasService.inicializar();
+      const configuracion = await this.citasService.obtenerConfiguracionAgendamiento(true);
+      this.aplicarConfiguracion(configuracion);
+    } catch {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'No fue posible cargar la configuracion. Verifica conexion con el backend.';
+    } finally {
+      this.cargando = false;
     }
   }
 
-  toggleDia(dia: string): void {
-    this.diasActivos[dia] = !this.diasActivos[dia];
-  }
-
-  abrirFormularioMedico(): void {
-    this.mostrarFormMedico = true;
-    this.medicoEditando = null;
-    this.formularioMedico = { nombre: '', apellido: '', especialidad: '' };
-  }
-
-  cerrarFormulario(): void {
-    this.mostrarFormMedico = false;
-    this.medicoEditando = null;
-  }
-
-  guardarMedico(): void {
-    if (!this.formularioMedico.nombre || !this.formularioMedico.apellido || !this.formularioMedico.especialidad) {
-      alert('Por favor completa todos los campos');
+  seleccionarMedico(medicoId: number): void {
+    this.medicoSeleccionadoId = medicoId;
+    const medico = this.medicos.find(m => m.id === medicoId);
+    if (!medico) {
       return;
     }
 
-    if (this.medicoEditando) {
-      // Actualizar médico existente
-      this.medicoEditando.nombre = this.formularioMedico.nombre;
-      this.medicoEditando.apellido = this.formularioMedico.apellido;
-      this.medicoEditando.especialidad = this.formularioMedico.especialidad;
-    } else {
-      // Crear nuevo médico
-      const nuevoId = Math.max(...this.medicos.map(m => m.id), 0) + 1;
-      this.medicos.push({
-        id: nuevoId,
-        nombre: this.formularioMedico.nombre,
-        apellido: this.formularioMedico.apellido,
-        especialidad: this.formularioMedico.especialidad,
-        activo: true,
-      });
-    }
-
-    this.cerrarFormulario();
-    alert('Médico guardado exitosamente');
+    this.medicoActivo = medico.activo;
+    this.intervaloSlot = medico.intervaloMin;
+    this.disponibilidadEditor = this.crearEditorDisponibilidad(medico);
   }
 
-  editarMedico(medico: any): void {
-    this.medicoEditando = medico;
-    this.formularioMedico = {
-      nombre: medico.nombre,
-      apellido: medico.apellido,
-      especialidad: medico.especialidad,
+  toggleDia(diaSemana: number): void {
+    const actual = this.disponibilidadEditor[diaSemana];
+    this.disponibilidadEditor[diaSemana] = {
+      ...actual,
+      activo: !actual.activo,
     };
-    this.mostrarFormMedico = true;
   }
 
-  eliminarMedico(id: number): void {
-    if (confirm('¿Está seguro de que desea eliminar este médico?')) {
-      this.medicos = this.medicos.filter(m => m.id !== id);
+  isDiaActivo(diaSemana: number): boolean {
+    return !!this.disponibilidadEditor[diaSemana]?.activo;
+  }
+
+  async guardarConfiguracion(): Promise<void> {
+    if (this.guardando) {
+      return;
+    }
+
+    if (this.ventanaSemanas < 1 || this.ventanaSemanas > 12) {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'La ventana de agendamiento debe estar entre 1 y 12 semanas.';
+      return;
+    }
+
+    if (this.intervaloSlot < 5 || this.intervaloSlot > 120) {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'El intervalo por medico debe estar entre 5 y 120 minutos.';
+      return;
+    }
+
+    const medicoEditando = this.medicos.find(m => m.id === this.medicoSeleccionadoId);
+    if (!medicoEditando) {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'Selecciona un medico o terapista para guardar cambios.';
+      return;
+    }
+
+    const disponibilidad = this.diasSemana
+      .map(dia => ({ dia, data: this.disponibilidadEditor[dia.id] }))
+      .filter(item => item.data?.activo)
+      .map(item => ({
+        diaSemana: item.dia.id,
+        horaInicio: item.data.horaInicio,
+        horaFin: item.data.horaFin,
+      }));
+
+    const rangoInvalido = disponibilidad.some(d => d.horaInicio >= d.horaFin);
+    if (rangoInvalido) {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'La hora de inicio debe ser menor a la hora fin en cada dia activo.';
+      return;
+    }
+
+    medicoEditando.activo = this.medicoActivo;
+    medicoEditando.intervaloMin = this.intervaloSlot;
+    medicoEditando.disponibilidad = disponibilidad;
+
+    this.guardando = true;
+    this.mensaje = '';
+
+    try {
+      const configGuardada = await this.citasService.guardarConfiguracionAgendamiento({
+        ventanaSemanas: this.ventanaSemanas,
+        medicos: this.medicos,
+      });
+
+      this.aplicarConfiguracion(configGuardada, medicoEditando.id);
+      this.tipoMensaje = 'ok';
+      this.mensaje = 'Configuracion guardada exitosamente.';
+    } catch {
+      this.tipoMensaje = 'error';
+      this.mensaje = 'No fue posible guardar la configuracion en el backend.';
+    } finally {
+      this.guardando = false;
     }
   }
 
-  toggleActivo(medico: any): void {
-    medico.activo = !medico.activo;
+  getNombreMedicoSeleccionado(): string {
+    const medico = this.medicos.find(m => m.id === this.medicoSeleccionadoId);
+    return medico ? `${medico.nombres} - ${medico.especialidad}` : 'Selecciona un medico o terapista';
   }
 
-  guardarConfiguracion(): void {
-    alert('Configuración guardada exitosamente');
+  private aplicarConfiguracion(configuracion: ConfiguracionAgendamiento, medicoPreferidoId?: number): void {
+    this.ventanaSemanas = configuracion.ventanaSemanas;
+    this.medicos = configuracion.medicos.map(m => ({
+      ...m,
+      disponibilidad: [...m.disponibilidad],
+    }));
+
+    const fallbackId = this.medicos[0]?.id ?? null;
+    const selectedId = medicoPreferidoId ?? this.medicoSeleccionadoId ?? fallbackId;
+    if (selectedId !== null) {
+      this.seleccionarMedico(selectedId);
+    }
+  }
+
+  private crearEditorDisponibilidad(medico: MedicoConfiguracion): Record<number, DisponibilidadEditor> {
+    const base: Record<number, DisponibilidadEditor> = {};
+    for (const dia of this.diasSemana) {
+      base[dia.id] = { activo: false, horaInicio: '08:00', horaFin: '12:00' };
+    }
+
+    for (const disp of medico.disponibilidad) {
+      base[disp.diaSemana] = {
+        activo: true,
+        horaInicio: disp.horaInicio,
+        horaFin: disp.horaFin,
+      };
+    }
+
+    return base;
   }
 }

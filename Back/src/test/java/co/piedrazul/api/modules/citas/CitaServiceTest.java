@@ -20,6 +20,7 @@ class CitaServiceTest {
   @Test
   void fallaSiMedicoNoAtiendeEseDia() throws Exception {
     CitaRepository citaRepo = Mockito.mock(CitaRepository.class);
+    ConfiguracionCitasService configuracionCitasService = Mockito.mock(ConfiguracionCitasService.class);
     MedicoService medicoService = Mockito.mock(MedicoService.class);
     PacienteService pacienteService = Mockito.mock(PacienteService.class);
     PacienteRepository pacienteRepository = Mockito.mock(PacienteRepository.class);
@@ -28,6 +29,7 @@ class CitaServiceTest {
 
     CitaService service = new CitaService(
       citaRepo,
+      configuracionCitasService,
       medicoService,
       pacienteService,
       pacienteRepository,
@@ -41,6 +43,7 @@ class CitaServiceTest {
     setField(medico, "intervaloMin", 20);
     setField(medico, "activo", true);
 
+    when(configuracionCitasService.getVentanaSemanas()).thenReturn(52);
     when(medicoService.obtenerActivoOFallar(1L)).thenReturn(medico);
     when(medicoService.getDisponibilidadParaFecha(1L, LocalDate.of(2026, 3, 29))).thenReturn(null);
 

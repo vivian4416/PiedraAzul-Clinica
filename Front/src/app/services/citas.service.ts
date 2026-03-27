@@ -19,8 +19,31 @@ interface AuthResponse {
 interface BackendMedico {
   id: number;
   nombres: string;
+  tipo?: string;
+  especialidad: string;
+  intervaloMin?: number;
+  activo: boolean;
+}
+
+interface BackendDisponibilidadConfig {
+  diaSemana: number;
+  horaInicio: string;
+  horaFin: string;
+}
+
+interface BackendMedicoConfiguracion {
+  id: number;
+  nombres: string;
+  tipo: string;
   especialidad: string;
   activo: boolean;
+  intervaloMin: number;
+  disponibilidad: BackendDisponibilidadConfig[];
+}
+
+interface BackendConfiguracionAgendamiento {
+  ventanaSemanas: number;
+  medicos: BackendMedicoConfiguracion[];
 }
 
 interface BackendPaciente {
@@ -71,6 +94,27 @@ export interface DiaDisponible {
   horas: string[];
 }
 
+export interface DisponibilidadConfig {
+  diaSemana: number;
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface MedicoConfiguracion {
+  id: number;
+  nombres: string;
+  tipo: string;
+  especialidad: string;
+  activo: boolean;
+  intervaloMin: number;
+  disponibilidad: DisponibilidadConfig[];
+}
+
+export interface ConfiguracionAgendamiento {
+  ventanaSemanas: number;
+  medicos: MedicoConfiguracion[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -94,6 +138,7 @@ export class CitasService {
   private readonly slotsBaseSubject = new BehaviorSubject<string[]>([]);
   private readonly ocupadosSubject = new BehaviorSubject<string[]>([]);
   private readonly diasDisponiblesSubject = new BehaviorSubject<DiaDisponible[]>([]);
+  private readonly configuracionSubject = new BehaviorSubject<ConfiguracionAgendamiento | null>(null);
 
   citas$ = this.citasSubject.asObservable();
   pacientes$ = this.pacientesSubject.asObservable();
@@ -101,6 +146,7 @@ export class CitasService {
   slotsBase$ = this.slotsBaseSubject.asObservable();
   ocupados$ = this.ocupadosSubject.asObservable();
   diasDisponibles$ = this.diasDisponiblesSubject.asObservable();
+  configuracion$ = this.configuracionSubject.asObservable();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -114,6 +160,7 @@ export class CitasService {
       return;
     }
 
+    await this.obtenerConfiguracionAgendamiento(true);
     await this.cargarMedicos();
     const medicos = this.medicosSubject.value;
     const medicoBase = medicos.length > 0 ? medicos[0].id : 1;
@@ -145,6 +192,51 @@ export class CitasService {
       });
 
     this.medicosSubject.next(medicos);
+  }
+
+  async obtenerConfiguracionAgendamiento(forceRefresh = false): Promise<ConfiguracionAgendamiento> {
+    const cache = this.configuracionSubject.value;
+    if (!forceRefresh && cache) {
+      return cache;
+    }
+
+    const data = await this.getApi<BackendConfiguracionAgendamiento>('/medicos/configuracion');
+    const configuracion = this.mapConfiguracion(data);
+    this.configuracionSubject.next(configuracion);
+
+    const medicosActivos = configuracion.medicos
+      .filter(m => m.activo)
+      .map(m => this.toMedicoListItem(m));
+    this.medicosSubject.next(medicosActivos);
+
+    return configuracion;
+  }
+
+  async guardarConfiguracionAgendamiento(configuracion: ConfiguracionAgendamiento): Promise<ConfiguracionAgendamiento> {
+    const payload = {
+      ventanaSemanas: configuracion.ventanaSemanas,
+      medicos: configuracion.medicos.map(m => ({
+        id: m.id,
+        intervaloMin: m.intervaloMin,
+        activo: m.activo,
+        disponibilidad: m.disponibilidad.map(d => ({
+          diaSemana: d.diaSemana,
+          horaInicio: d.horaInicio,
+          horaFin: d.horaFin,
+        })),
+      })),
+    };
+
+    const data = await this.putApi<BackendConfiguracionAgendamiento>('/medicos/configuracion', payload);
+    const nuevaConfiguracion = this.mapConfiguracion(data);
+    this.configuracionSubject.next(nuevaConfiguracion);
+
+    const medicosActivos = nuevaConfiguracion.medicos
+      .filter(m => m.activo)
+      .map(m => this.toMedicoListItem(m));
+    this.medicosSubject.next(medicosActivos);
+
+    return nuevaConfiguracion;
   }
 
   async cargarCitasPorFiltro(medicoId: number, fecha: string): Promise<void> {
@@ -194,13 +286,24 @@ export class CitasService {
       return;
     }
 
+    const configuracion = await this.obtenerConfiguracionAgendamiento();
+    const ventanaSemanas = configuracion.ventanaSemanas;
     const dias: DiaDisponible[] = [];
     const inicio = new Date();
+    inicio.setHours(0, 0, 0, 0);
     inicio.setDate(inicio.getDate() + (semanaOffset * 7));
 
-    for (let i = 0; i < 5; i++) {
+    const maxFecha = new Date();
+    maxFecha.setHours(0, 0, 0, 0);
+    maxFecha.setDate(maxFecha.getDate() + (ventanaSemanas * 7));
+
+    for (let i = 0; i < 7; i++) {
       const fecha = new Date(inicio);
       fecha.setDate(inicio.getDate() + i);
+      if (fecha > maxFecha) {
+        break;
+      }
+
       const fechaIso = this.toLocalIsoDate(fecha);
 
       const params = new HttpParams()
@@ -400,6 +503,14 @@ export class CitasService {
     return this.diasDisponiblesSubject.value;
   }
 
+  getVentanaSemanas(): number {
+    return this.configuracionSubject.value?.ventanaSemanas ?? 4;
+  }
+
+  getConfiguracionAgendamiento(): ConfiguracionAgendamiento | null {
+    return this.configuracionSubject.value;
+  }
+
   private async fetchCitas(medicoId: number, fecha: string): Promise<Cita[]> {
     const params = new HttpParams()
       .set('medicoId', String(medicoId))
@@ -467,6 +578,14 @@ export class CitasService {
     return response.data;
   }
 
+  private async putApi<T = unknown>(path: string, body: unknown): Promise<T> {
+    await this.ensureAuthenticated();
+    const response = await firstValueFrom(this.http.put<ApiResponse<T>>(`${this.apiBase}${path}`, body, {
+      headers: this.buildHeaders(),
+    }).pipe(timeout(this.requestTimeoutMs)));
+    return response.data;
+  }
+
   private buildHeaders(): HttpHeaders {
     return new HttpHeaders({
       Authorization: `Bearer ${this.token ?? ''}`,
@@ -492,6 +611,36 @@ export class CitasService {
     const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
     const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
     return `${weekdayCap} ${day} ${monthCap}`;
+  }
+
+  private mapConfiguracion(data: BackendConfiguracionAgendamiento): ConfiguracionAgendamiento {
+    return {
+      ventanaSemanas: data.ventanaSemanas,
+      medicos: (data.medicos ?? []).map(m => ({
+        id: m.id,
+        nombres: m.nombres,
+        tipo: m.tipo,
+        especialidad: m.especialidad,
+        activo: m.activo,
+        intervaloMin: m.intervaloMin,
+        disponibilidad: (m.disponibilidad ?? []).map(d => ({
+          diaSemana: d.diaSemana,
+          horaInicio: d.horaInicio.slice(0, 5),
+          horaFin: d.horaFin.slice(0, 5),
+        })),
+      })),
+    };
+  }
+
+  private toMedicoListItem(medico: MedicoConfiguracion): Medico {
+    const [nombre, ...resto] = medico.nombres.trim().split(' ');
+    return {
+      id: medico.id,
+      nombre,
+      apellido: resto.join(' ').trim(),
+      especialidad: medico.especialidad,
+      descripcion: `${medico.nombres} - ${medico.especialidad}`,
+    };
   }
 
   private toBackendGenero(genero: string): 'HOMBRE' | 'MUJER' | 'OTRO' {

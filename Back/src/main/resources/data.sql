@@ -16,6 +16,9 @@ INSERT INTO medico_disponibilidad (medico_id, dia_semana, hora_inicio, hora_fin)
   (2, 2, '08:30:00', '11:30:00'),
   (2, 4, '08:30:00', '11:30:00');
 
+INSERT INTO configuracion_citas (id, ventana_semanas) VALUES
+  (1, 4);
+
 INSERT INTO pacientes (id, num_documento, nombres, apellidos, celular, genero) VALUES
   (1, '79453201', 'Carlos', 'Rios Vargas', '3112345678', 'HOMBRE'),
   (2, '52318740', 'Luisa', 'Fernandez', '3001239876', 'MUJER');

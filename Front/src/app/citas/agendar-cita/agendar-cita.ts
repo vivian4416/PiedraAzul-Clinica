@@ -28,7 +28,7 @@ export class AgendarCitaComponent implements OnInit {
 
   mostrarConfirmacion = false;
   semanaSeleccionada = 0;
-  readonly semanasDisponibles = [0, 1, 2, 3];
+  semanasDisponibles: number[] = [0, 1, 2, 3];
 
   cargando = false;
   guardando = false;
@@ -55,6 +55,8 @@ export class AgendarCitaComponent implements OnInit {
 
     try {
       await this.citasService.inicializar();
+      const configuracion = await this.citasService.obtenerConfiguracionAgendamiento();
+      this.semanasDisponibles = Array.from({ length: configuracion.ventanaSemanas }, (_, idx) => idx);
       this.medicos = this.citasService.getMedicos();
 
       const primerMedico = this.medicos[0];

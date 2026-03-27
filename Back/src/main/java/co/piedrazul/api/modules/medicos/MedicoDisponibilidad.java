@@ -32,4 +32,9 @@ public class MedicoDisponibilidad {
   public Integer getDiaSemana() { return diaSemana; }
   public LocalTime getHoraInicio() { return horaInicio; }
   public LocalTime getHoraFin() { return horaFin; }
+
+  public void setMedicoId(Long medicoId) { this.medicoId = medicoId; }
+  public void setDiaSemana(Integer diaSemana) { this.diaSemana = diaSemana; }
+  public void setHoraInicio(LocalTime horaInicio) { this.horaInicio = horaInicio; }
+  public void setHoraFin(LocalTime horaFin) { this.horaFin = horaFin; }
 }

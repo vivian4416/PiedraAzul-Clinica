@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS medico_disponibilidad (
   CONSTRAINT fk_disp_med FOREIGN KEY (medico_id) REFERENCES medicos(id)
 );
 
+CREATE TABLE IF NOT EXISTS configuracion_citas (
+  id INT PRIMARY KEY,
+  ventana_semanas INT NOT NULL DEFAULT 4
+);
+
 CREATE TABLE IF NOT EXISTS pacientes (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   num_documento VARCHAR(20) NOT NULL UNIQUE,

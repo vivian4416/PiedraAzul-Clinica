@@ -35,4 +35,7 @@ public class Medico {
   public String getEspecialidad() { return especialidad; }
   public Integer getIntervaloMin() { return intervaloMin; }
   public boolean isActivo() { return activo; }
+
+  public void setIntervaloMin(Integer intervaloMin) { this.intervaloMin = intervaloMin; }
+  public void setActivo(boolean activo) { this.activo = activo; }
 }

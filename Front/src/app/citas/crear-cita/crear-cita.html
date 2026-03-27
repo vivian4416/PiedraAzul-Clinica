@@ -116,7 +116,7 @@
           <!-- SELECCIONAR FECHA -->
           <div class="mb-4">
             <label for="fecha" class="form-label">Fecha *</label>
-            <input type="date" id="fecha" class="form-control" [class.is-invalid]="mostrarError('fecha')" [min]="hoyIso"
+            <input type="date" id="fecha" class="form-control" [class.is-invalid]="mostrarError('fecha')" [min]="hoyIso" [max]="maxFechaCitaIso"
               [(ngModel)]="formCita.fecha" (ngModelChange)="onFechaCitaChange($event)" (input)="onFechaCitaInput($event)">
             <div *ngIf="mensajeError('fecha')" class="error-msg">{{ mensajeError('fecha') }}</div>
           </div>

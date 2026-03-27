@@ -24,6 +24,7 @@ export class CrearCitaComponent implements OnInit {
 
   readonly hoyIso = this.toIsoDate(new Date());
   readonly maxFechaNacimientoIso = this.getYesterdayIso();
+  maxFechaCitaIso = this.toIsoDate(this.getDateOffset(28));
 
   touched: Record<string, boolean> = {
     doc: false,
@@ -77,6 +78,8 @@ export class CrearCitaComponent implements OnInit {
   private async cargarInicial(): Promise<void> {
     try {
       await this.citasService.inicializar();
+      const configuracion = await this.citasService.obtenerConfiguracionAgendamiento();
+      this.maxFechaCitaIso = this.toIsoDate(this.getDateOffset(configuracion.ventanaSemanas * 7));
       this.medicos = this.citasService.getMedicos();
       this.slots = this.citasService.getSlots();
       this.slotOcupados = this.citasService.getSlotOcupados();
@@ -422,9 +425,13 @@ export class CrearCitaComponent implements OnInit {
 
   private validarFechaCita(value: string): string {
     if (!value) return 'La fecha de la cita es obligatoria.';
-    return value >= this.hoyIso
-      ? ''
-      : 'La fecha de la cita debe ser igual o mayor a la fecha actual.';
+    if (value < this.hoyIso) {
+      return 'La fecha de la cita debe ser igual o mayor a la fecha actual.';
+    }
+    if (value > this.maxFechaCitaIso) {
+      return `La fecha de la cita no puede superar ${this.maxFechaCitaIso}.`;
+    }
+    return '';
   }
 
   private validarSlot(): string {
@@ -463,5 +470,11 @@ export class CrearCitaComponent implements OnInit {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     return this.toIsoDate(yesterday);
+  }
+
+  private getDateOffset(offsetDays: number): Date {
+    const date = new Date();
+    date.setDate(date.getDate() + offsetDays);
+    return date;
   }
 }
