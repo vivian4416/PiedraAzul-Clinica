@@ -12,6 +12,7 @@ import { Medico, Paciente } from '../../models/cita.model';
   templateUrl: './agendar-cita.html',
   styleUrl: './agendar-cita.css',
 })
+// Flujo de agendamiento web del paciente con validacion previa de registro.
 export class AgendarCitaComponent implements OnInit {
   modoActual: 'paciente' | 'agendador' = 'paciente';
 

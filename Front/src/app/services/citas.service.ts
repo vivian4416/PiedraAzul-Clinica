@@ -118,6 +118,7 @@ export interface ConfiguracionAgendamiento {
 @Injectable({
   providedIn: 'root'
 })
+// Orquesta llamadas a la API y estado local de citas, medicos y disponibilidad.
 export class CitasService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
@@ -532,6 +533,7 @@ export class CitasService {
   }
 
   private async ensureAuthenticated(): Promise<void> {
+    // Login tecnico temporal hasta integrar autenticacion externa.
     if (!this.isBrowser) {
       return;
     }

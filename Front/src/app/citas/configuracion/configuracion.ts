@@ -25,6 +25,7 @@ interface DisponibilidadEditor {
   templateUrl: './configuracion.html',
   styleUrl: './configuracion.css',
 })
+// Configuracion de ventana, intervalos y disponibilidad por profesional.
 export class ConfiguracionComponent implements OnInit {
   readonly diasSemana: DiaSemanaItem[] = [
     { id: 1, nombre: 'Lunes', corto: 'Lun' },

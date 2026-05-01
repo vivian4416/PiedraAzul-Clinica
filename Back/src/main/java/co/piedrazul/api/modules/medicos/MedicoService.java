@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+/** Gestion de medicos, disponibilidad diaria y parametros de agendamiento. */
 public class MedicoService {
   private final MedicoRepository medicoRepository;
   private final MedicoDisponibilidadRepository disponibilidadRepository;

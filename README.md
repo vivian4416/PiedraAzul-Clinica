@@ -8,7 +8,7 @@ Incluye:
 
 ## Estado actual del sistema
 
-Se cubren los 4 flujos funcionales principales:
+Se cubren los 5 flujos funcionales principales:
 
 1. RF1 - Listar citas por medico y fecha
 - Vista de tabla con filtros por medico y fecha.
@@ -29,6 +29,38 @@ Se cubren los 4 flujos funcionales principales:
 - Configuracion de franja horaria por dia para cada medico/terapista.
 - Configuracion de intervalo de minutos entre citas por medico/terapista.
 - Activacion/inactivacion de medicos o terapistas para agendamiento.
+
+5. RF5 - Exportar citas por medico y fecha (CSV)
+- Exportacion desde la vista de citas filtradas.
+- Formato CSV compatible con hojas de calculo.
+
+## Documentacion de requisitos funcionales
+
+RF1 - Listar citas por medico y fecha
+- Vista: modulo Citas (tabla con filtros de medico y fecha).
+- Backend: GET /api/v1/citas?medicoId=&fecha=.
+- Resultado: listado de citas con conteo y estado; se muestra en tabla.
+
+RF2 - Crear cita manual (agendador)
+- Vista: modulo Nueva Cita (formulario de paciente y cita).
+- Backend: POST /api/v1/citas.
+- Validaciones: datos minimos del paciente, disponibilidad del slot por intervalo del medico.
+
+RF3 - Agendar cita por web (paciente)
+- Vista: modulo Agendar (seleccion de medico, semana y slot).
+- Backend: POST /api/v1/citas/autonoma.
+- Validaciones: paciente registrado (documento/celular), fecha en ventana, slot disponible.
+- Disponibilidad: consulta de slots por medico y fecha (GET /api/v1/citas/slots).
+
+RF4 - Configuracion de agenda (administrador/agendador)
+- Vista: modulo Configuracion (ventana, dias, franja e intervalo por medico).
+- Backend: GET/PUT /api/v1/medicos/configuracion.
+- Validaciones: ventana 1-12 semanas, intervalo 5-120 min, hora inicio menor a hora fin.
+
+RF5 - Exportar citas por medico y fecha (CSV)
+- Vista: modulo Citas (boton Exportar CSV sobre la tabla filtrada).
+- Origen de datos: listado actual filtrado por medico y fecha.
+- Formato: CSV con columnas de hora, paciente, documento, celular, origen y estado.
 
 ## Estructura del proyecto
 

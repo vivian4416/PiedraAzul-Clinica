@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/citas")
+/** Endpoints de citas: listado, slots disponibles y creacion manual/autonoma. */
 public class CitaController {
   private static final Logger log = LoggerFactory.getLogger(CitaController.class);
   private final CitaService citaService;

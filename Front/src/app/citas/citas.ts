@@ -10,6 +10,7 @@ import { Cita } from '../models/cita.model';
   templateUrl: './citas.html',
   styleUrl: './citas.css',
 })
+// Tabla de citas con filtros por medico/fecha y exportacion CSV.
 export class CitasComponent implements OnInit {
   citas: Cita[] = [];
   citasFiltradas: Cita[] = [];
@@ -135,6 +136,7 @@ export class CitasComponent implements OnInit {
   }
 
   exportarCSV(): void {
+    // Exporta la vista actual filtrada en un CSV simple.
     const rows = [
       ['Hora', 'Paciente', 'Documento', 'Celular', 'Origen', 'Estado'],
       ...this.citasFiltradas.map(c => [c.hora, c.paciente, c.doc, c.cel, c.origen, c.estado])

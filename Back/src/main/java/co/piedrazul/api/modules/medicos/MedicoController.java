@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/medicos")
+/** Endpoints de medicos y configuracion de agenda por profesional. */
 public class MedicoController {
   private final MedicoService medicoService;
 

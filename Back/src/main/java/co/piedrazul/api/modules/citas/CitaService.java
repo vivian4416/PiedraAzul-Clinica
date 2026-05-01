@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+/** Logica de citas: consulta, validacion de slots y creacion con reglas de negocio. */
 public class CitaService {
   private static final Logger log = LoggerFactory.getLogger(CitaService.class);
   private final CitaRepository citaRepository;
@@ -109,6 +110,7 @@ public class CitaService {
   }
 
   private CitaCreadaResponse crear(CrearCitaRequest req, Long creadoPor, String origen, boolean exigirPacienteRegistrado) {
+    // Orden de validaciones: ventana, disponibilidad del medico, slot y datos del paciente.
     long startedAt = System.currentTimeMillis();
     validarFechaEnVentana(req.fecha());
     Medico medico = medicoService.obtenerActivoOFallar(req.medicoId());

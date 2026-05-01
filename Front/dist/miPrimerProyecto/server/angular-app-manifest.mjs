@@ -33,13 +33,13 @@ export default {
 ],
   entryPointToBrowserMapping: undefined,
   assets: {
-    'index.csr.html': {size: 13182, hash: '2f92a6262ee98bfab73e5848ef21e4b1a63eb8b60895fb3ecc93741555654332', text: () => import('./assets-chunks/index_csr_html.mjs').then(m => m.default)},
-    'index.server.html': {size: 8008, hash: '9a831057c34eb6fe38a0d1381933e8b84d0cd61bc7a6c89ae3edd757fe51213f', text: () => import('./assets-chunks/index_server_html.mjs').then(m => m.default)},
-    'citas/index.html': {size: 30432, hash: '1e519f990052fd4de345a9f688e5c445ecc6b9225a6a8591072126267dab62a9', text: () => import('./assets-chunks/citas_index_html.mjs').then(m => m.default)},
-    'clientes/index.html': {size: 40266, hash: '9c7caefb6f45dd7bb689db6b8b8fb9eb5df27b61f7e654350b8ff810b293a434', text: () => import('./assets-chunks/clientes_index_html.mjs').then(m => m.default)},
-    'crear-cita/index.html': {size: 31961, hash: '61a29317e460c6c90a3582d37dd23df4f9ada2fcd3f8456da28b55326d54cf4d', text: () => import('./assets-chunks/crear-cita_index_html.mjs').then(m => m.default)},
-    'agendar-cita/index.html': {size: 32717, hash: '622251121f343bf2452dcfacac49affbefe9fcd730d25e7efee5f5194cbfd88b', text: () => import('./assets-chunks/agendar-cita_index_html.mjs').then(m => m.default)},
-    'configuracion/index.html': {size: 28578, hash: 'fb3569982f7ebc35ad1de904a1eb57dbcd8fda723e970fb819558248220aea0e', text: () => import('./assets-chunks/configuracion_index_html.mjs').then(m => m.default)},
+    'index.csr.html': {size: 13182, hash: '0fb07d71a4da700fcd52d805bc8de9e929235c5ff3757df4818600c92f1cf76e', text: () => import('./assets-chunks/index_csr_html.mjs').then(m => m.default)},
+    'index.server.html': {size: 8008, hash: '868e07764aaa18c451649c9237e4ea30f2a9ba35fde45ec1c15f5a4fdf31dd59', text: () => import('./assets-chunks/index_server_html.mjs').then(m => m.default)},
+    'clientes/index.html': {size: 40266, hash: '1f9055cf32c15aec008da0e876856de3f703944af5733f6ed9cee10a79fbb081', text: () => import('./assets-chunks/clientes_index_html.mjs').then(m => m.default)},
+    'citas/index.html': {size: 30431, hash: '602a636893fd5fd2130ac5aebe4c049dc84f3c96918ed26d1dc010721bf5d58e', text: () => import('./assets-chunks/citas_index_html.mjs').then(m => m.default)},
+    'configuracion/index.html': {size: 28578, hash: '2eb4101fedce5522d47c99fbdf12513ca923829da45cb6d567176e53c257669f', text: () => import('./assets-chunks/configuracion_index_html.mjs').then(m => m.default)},
+    'crear-cita/index.html': {size: 31961, hash: '078d1ca345d8e488a02363c2f473e6b2289ed69c7cc997d0c249b194d1c7dd04', text: () => import('./assets-chunks/crear-cita_index_html.mjs').then(m => m.default)},
+    'agendar-cita/index.html': {size: 32452, hash: 'b86f703596aad72e56cb42fd2006107e5c873323659e69f2a926be04ae3d6957', text: () => import('./assets-chunks/agendar-cita_index_html.mjs').then(m => m.default)},
     'styles-U2LAC5OC.css': {size: 9831, hash: 'SbAFj3YhhJY', text: () => import('./assets-chunks/styles-U2LAC5OC_css.mjs').then(m => m.default)}
   },
 };
