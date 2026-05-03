@@ -13,7 +13,7 @@ public record CrearCitaRequest(
   @NotBlank String genero,
   LocalDate fechaNacimiento,
   String email,
-  @NotNull Long medicoId,
+  @NotBlank String medicoId,
   @NotNull LocalDate fecha,
   @NotNull LocalTime hora
 ) {}

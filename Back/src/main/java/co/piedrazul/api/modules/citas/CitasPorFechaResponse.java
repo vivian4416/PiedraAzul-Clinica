@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record CitasPorFechaResponse(
-  Long medicoId,
+  String medicoId,
   String medicoNombre,
   LocalDate fecha,
   int total,

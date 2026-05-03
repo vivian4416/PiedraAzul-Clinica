@@ -1,0 +1,525 @@
+{
+  "info": {
+    "_postman_id": "2f4e8b6e-9c87-4c3f-8f4d-0f4d7d5b1d21",
+    "name": "PiedraAzul API",
+    "description": "Coleccion para probar la API con Keycloak y CRUD de usuarios desde Postman. El request de token usa password grant y funciona mejor con un cliente dedicado de Postman que permita Direct Access Grants en Keycloak.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Keycloak",
+      "item": [
+        {
+          "name": "Obtener token (password grant)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "{{kcGrantType}}"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{postmanClientId}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{postmanClientSecret}}",
+                  "disabled": false
+                },
+                {
+                  "key": "username",
+                  "value": "{{kcUsername}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{kcPassword}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{keycloakBaseUrl}}/realms/{{realm}}/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakBaseUrl}}"
+              ],
+              "path": [
+                "realms",
+                "{{realm}}",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "description": "Obtiene access_token y refresh_token para usar en el resto de la coleccion. Recomendado: crear un client dedicado para Postman con Direct Access Grants habilitado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Respuesta valida', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const data = pm.response.json();",
+                  "if (data.access_token) {",
+                  "  pm.environment.set('accessToken', data.access_token);",
+                  "}",
+                  "if (data.refresh_token) {",
+                  "  pm.environment.set('refreshToken', data.refresh_token);",
+                  "}",
+                  "if (data.expires_in) {",
+                  "  pm.environment.set('tokenExpiresIn', String(data.expires_in));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/health",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verifica que la API este levantada."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{accessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener usuario por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios/{{userId}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios/me",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me"
+              ]
+            },
+            "description": "Devuelve el usuario local asociado al preferred_username del token de Keycloak."
+          }
+        },
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{newUserLogin}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"nombreCompleto\": \"{{newUserNombreCompleto}}\",\n  \"rol\": \"{{newUserRol}}\",\n  \"activo\": {{newUserActivo}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{updateUserLogin}}\",\n  \"password\": \"{{updateUserPassword}}\",\n  \"nombreCompleto\": \"{{updateUserNombreCompleto}}\",\n  \"rol\": \"{{updateUserRol}}\",\n  \"activo\": {{updateUserActivo}}\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios/{{userId}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{userId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Desactivar usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/usuarios/{{userId}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "{{userId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Medicos",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{accessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Listar medicos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/medicos",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener configuracion de agenda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/medicos/configuracion",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "configuracion"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Guardar configuracion de agenda",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ventanaSemanas\": {{ventanaSemanas}},\n  \"medicos\": [\n    {\n      \"id\": {{configMedicoId}},\n      \"intervaloMin\": {{configIntervaloMin}},\n      \"activo\": {{configActivo}},\n      \"disponibilidad\": [\n        {\n          \"diaSemana\": 1,\n          \"horaInicio\": \"08:00:00\",\n          \"horaFin\": \"12:00:00\"\n        },\n        {\n          \"diaSemana\": 3,\n          \"horaInicio\": \"08:00:00\",\n          \"horaFin\": \"12:00:00\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/medicos/configuracion",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "medicos",
+                "configuracion"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{accessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Buscar paciente por documento",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/pacientes?documento={{pacienteDocumento}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pacientes"
+              ],
+              "query": [
+                {
+                  "key": "documento",
+                  "value": "{{pacienteDocumento}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Citas",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{accessToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Listar citas por medico y fecha",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/citas?medicoId={{medicoId}}&fecha={{fechaCita}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "citas"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medicoId}}"
+                },
+                {
+                  "key": "fecha",
+                  "value": "{{fechaCita}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Slots disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/citas/slots?medicoId={{medicoId}}&fecha={{fechaCita}}",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "citas",
+                "slots"
+              ],
+              "query": [
+                {
+                  "key": "medicoId",
+                  "value": "{{medicoId}}"
+                },
+                {
+                  "key": "fecha",
+                  "value": "{{fechaCita}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear cita manual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numDocumento\": \"{{citaNumDocumento}}\",\n  \"nombres\": \"{{citaNombres}}\",\n  \"apellidos\": \"{{citaApellidos}}\",\n  \"celular\": \"{{citaCelular}}\",\n  \"genero\": \"{{citaGenero}}\",\n  \"fechaNacimiento\": \"{{citaFechaNacimiento}}\",\n  \"email\": \"{{citaEmail}}\",\n  \"medicoId\": {{medicoId}},\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"{{horaCita}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/citas",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "citas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear cita autonoma",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numDocumento\": \"{{citaNumDocumento}}\",\n  \"nombres\": \"{{citaNombres}}\",\n  \"apellidos\": \"{{citaApellidos}}\",\n  \"celular\": \"{{citaCelular}}\",\n  \"genero\": \"{{citaGenero}}\",\n  \"fechaNacimiento\": \"{{citaFechaNacimiento}}\",\n  \"email\": \"{{citaEmail}}\",\n  \"medicoId\": {{medicoId}},\n  \"fecha\": \"{{fechaCita}}\",\n  \"hora\": \"{{horaCita}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiBaseUrl}}/api/v1/citas/autonoma",
+              "host": [
+                "{{apiBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "citas",
+                "autonoma"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

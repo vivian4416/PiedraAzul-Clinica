@@ -1,6 +1,6 @@
 export interface Cita {
   id: number;
-  medico: number;
+  medico: string;
   hora: string;
   paciente: string;
   doc: string;
@@ -21,7 +21,7 @@ export interface Paciente {
 }
 
 export interface Medico {
-  id: number;
+  id: string;
   nombre: string;
   apellido: string;
   especialidad: string;

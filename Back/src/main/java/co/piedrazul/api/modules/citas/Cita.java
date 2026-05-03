@@ -1,12 +1,13 @@
 package co.piedrazul.api.modules.citas;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "citas")
@@ -16,13 +17,13 @@ public class Cita {
   private Long id;
 
   @Column(name = "medico_id", nullable = false)
-  private Long medicoId;
+  private String medicoId;
 
   @Column(name = "paciente_id", nullable = false)
   private Long pacienteId;
 
   @Column(name = "creado_por", nullable = false)
-  private Long creadoPor;
+  private String creadoPor;
 
   @Column(name = "fecha_hora", nullable = false)
   private LocalDateTime fechaHora;
@@ -34,16 +35,16 @@ public class Cita {
   private String origen;
 
   public Long getId() { return id; }
-  public Long getMedicoId() { return medicoId; }
+  public String getMedicoId() { return medicoId; }
   public Long getPacienteId() { return pacienteId; }
-  public Long getCreadoPor() { return creadoPor; }
+  public String getCreadoPor() { return creadoPor; }
   public LocalDateTime getFechaHora() { return fechaHora; }
   public String getEstado() { return estado; }
   public String getOrigen() { return origen; }
 
-  public void setMedicoId(Long medicoId) { this.medicoId = medicoId; }
+  public void setMedicoId(String medicoId) { this.medicoId = medicoId; }
   public void setPacienteId(Long pacienteId) { this.pacienteId = pacienteId; }
-  public void setCreadoPor(Long creadoPor) { this.creadoPor = creadoPor; }
+  public void setCreadoPor(String creadoPor) { this.creadoPor = creadoPor; }
   public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
   public void setEstado(String estado) { this.estado = estado; }
   public void setOrigen(String origen) { this.origen = origen; }

@@ -1,5 +1,21 @@
 package co.piedrazul.api.modules.citas;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.piedrazul.api.core.AppException;
 import co.piedrazul.api.modules.medicos.Medico;
 import co.piedrazul.api.modules.medicos.MedicoDisponibilidad;
@@ -9,20 +25,6 @@ import co.piedrazul.api.modules.pacientes.Paciente;
 import co.piedrazul.api.modules.pacientes.PacienteInput;
 import co.piedrazul.api.modules.pacientes.PacienteRepository;
 import co.piedrazul.api.modules.pacientes.PacienteService;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 /** Logica de citas: consulta, validacion de slots y creacion con reglas de negocio. */
@@ -52,7 +54,7 @@ public class CitaService {
     this.eventPublisher = eventPublisher;
   }
 
-  public CitasPorFechaResponse listarPorMedicoYFecha(Long medicoId, LocalDate fecha) {
+  public CitasPorFechaResponse listarPorMedicoYFecha(String medicoId, LocalDate fecha) {
     Medico medico = medicoService.obtenerActivoOFallar(medicoId);
     LocalDateTime start = fecha.atStartOfDay();
     LocalDateTime end = fecha.plusDays(1).atStartOfDay();
@@ -100,17 +102,16 @@ public class CitaService {
   }
 
   @Transactional
-  public CitaCreadaResponse crearManual(CrearCitaRequest req, Long creadoPor, String origen) {
+  public CitaCreadaResponse crearManual(CrearCitaRequest req, String creadoPor, String origen) {
     return crear(req, creadoPor, origen, false);
   }
 
   @Transactional
-  public CitaCreadaResponse crearAutonoma(CrearCitaRequest req, Long creadoPor) {
+  public CitaCreadaResponse crearAutonoma(CrearCitaRequest req, String creadoPor) {
     return crear(req, creadoPor, "AUTONOMA", true);
   }
 
-  private CitaCreadaResponse crear(CrearCitaRequest req, Long creadoPor, String origen, boolean exigirPacienteRegistrado) {
-    // Orden de validaciones: ventana, disponibilidad del medico, slot y datos del paciente.
+  private CitaCreadaResponse crear(CrearCitaRequest req, String creadoPor, String origen, boolean exigirPacienteRegistrado) {
     long startedAt = System.currentTimeMillis();
     validarFechaEnVentana(req.fecha());
     Medico medico = medicoService.obtenerActivoOFallar(req.medicoId());

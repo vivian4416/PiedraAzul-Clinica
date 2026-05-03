@@ -16,7 +16,7 @@ public class MedicoDisponibilidad {
   private Long id;
 
   @Column(name = "medico_id", nullable = false)
-  private Long medicoId;
+  private String medicoId;
 
   @Column(name = "dia_semana", nullable = false)
   private Integer diaSemana;
@@ -28,12 +28,12 @@ public class MedicoDisponibilidad {
   private LocalTime horaFin;
 
   public Long getId() { return id; }
-  public Long getMedicoId() { return medicoId; }
+  public String getMedicoId() { return medicoId; }
   public Integer getDiaSemana() { return diaSemana; }
   public LocalTime getHoraInicio() { return horaInicio; }
   public LocalTime getHoraFin() { return horaFin; }
 
-  public void setMedicoId(Long medicoId) { this.medicoId = medicoId; }
+  public void setMedicoId(String medicoId) { this.medicoId = medicoId; }
   public void setDiaSemana(Integer diaSemana) { this.diaSemana = diaSemana; }
   public void setHoraInicio(LocalTime horaInicio) { this.horaInicio = horaInicio; }
   public void setHoraFin(LocalTime horaFin) { this.horaFin = horaFin; }

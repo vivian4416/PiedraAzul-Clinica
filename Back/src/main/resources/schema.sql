@@ -1,27 +1,15 @@
-CREATE TABLE IF NOT EXISTS usuarios (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  login VARCHAR(60) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  nombre_completo VARCHAR(120) NOT NULL,
-  rol VARCHAR(20) NOT NULL,
-  activo BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS medicos (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  usuario_id BIGINT NULL,
+  id VARCHAR(36) PRIMARY KEY,
   nombres VARCHAR(120) NOT NULL,
   tipo VARCHAR(20) NOT NULL,
   especialidad VARCHAR(30) NOT NULL,
-  intervalo_min INT NOT NULL DEFAULT 20,
-  activo BOOLEAN NOT NULL DEFAULT TRUE,
-  CONSTRAINT fk_med_usr FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  intervalo_min INT NOT NULL DEFAULT 30,
+  activo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS medico_disponibilidad (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  medico_id BIGINT NOT NULL,
+  medico_id VARCHAR(36) NOT NULL,
   dia_semana INT NOT NULL,
   hora_inicio TIME NOT NULL,
   hora_fin TIME NOT NULL,
@@ -43,35 +31,31 @@ CREATE TABLE IF NOT EXISTS pacientes (
   genero VARCHAR(10) NOT NULL,
   fecha_nacimiento DATE NULL,
   email VARCHAR(120) NULL,
-  usuario_id BIGINT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_pac_usr FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS citas (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  medico_id BIGINT NOT NULL,
+  medico_id VARCHAR(36) NOT NULL,
   paciente_id BIGINT NOT NULL,
-  creado_por BIGINT NOT NULL,
+  creado_por VARCHAR(64) NOT NULL,
   fecha_hora TIMESTAMP NOT NULL,
   estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADA',
   origen VARCHAR(20) NOT NULL DEFAULT 'MANUAL',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT uq_medico_slot UNIQUE (medico_id, fecha_hora),
   CONSTRAINT fk_cita_med FOREIGN KEY (medico_id) REFERENCES medicos(id),
-  CONSTRAINT fk_cita_pac FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-  CONSTRAINT fk_cita_usr FOREIGN KEY (creado_por) REFERENCES usuarios(id)
+  CONSTRAINT fk_cita_pac FOREIGN KEY (paciente_id) REFERENCES pacientes(id)
 );
 
 CREATE TABLE IF NOT EXISTS auditoria (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
-  usuario_id BIGINT NULL,
+  usuario_id VARCHAR(64) NULL,
   accion VARCHAR(60) NOT NULL,
   entidad VARCHAR(40) NULL,
   entidad_id BIGINT NULL,
   detalle VARCHAR(1000) NULL,
-  fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_aud_usr FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+  fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_citas_medico_fecha ON citas (medico_id, fecha_hora);

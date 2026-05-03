@@ -61,7 +61,7 @@ export class AgendarCitaComponent implements OnInit {
       this.medicos = this.citasService.getMedicos();
 
       const primerMedico = this.medicos[0];
-      this.medicoSeleccionado = primerMedico ? String(primerMedico.id) : '';
+      this.medicoSeleccionado = primerMedico ? primerMedico.id : '';
       await this.cargarDisponibilidad();
     } catch {
       this.diasDisponibles = [];
@@ -135,7 +135,7 @@ export class AgendarCitaComponent implements OnInit {
       this.syncUi();
     }, 15000);
 
-    const medicoId = Number.parseInt(this.medicoSeleccionado, 10);
+    const medicoId = this.medicoSeleccionado;
     const fecha = this.slotSeleccionado.fecha;
     const hora = this.slotSeleccionado.hora;
     const resumen = {
@@ -217,8 +217,7 @@ export class AgendarCitaComponent implements OnInit {
   }
 
   getNombreMedico(): string {
-    const id = Number.parseInt(this.medicoSeleccionado, 10);
-    const medico = this.medicos.find(m => m.id === id);
+    const medico = this.medicos.find(m => m.id === this.medicoSeleccionado);
     if (!medico) {
       return 'Selecciona un médico';
     }
@@ -243,7 +242,7 @@ export class AgendarCitaComponent implements OnInit {
       genero: string;
       fechaNacimiento?: string;
       email?: string;
-      medicoId: number;
+      medicoId: string;
       fecha: string;
       hora: string;
     },
@@ -287,7 +286,7 @@ export class AgendarCitaComponent implements OnInit {
   }
 
   private async cargarDisponibilidad(): Promise<void> {
-    const medicoId = Number.parseInt(this.medicoSeleccionado, 10);
+    const medicoId = this.medicoSeleccionado;
 
     this.slotSeleccionado = null;
     this.mostrarConfirmacion = false;

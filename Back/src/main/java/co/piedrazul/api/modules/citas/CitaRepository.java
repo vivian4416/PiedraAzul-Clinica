@@ -6,11 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CitaRepository extends JpaRepository<Cita, Long> {
   List<Cita> findByMedicoIdAndFechaHoraBetweenAndEstadoNotOrderByFechaHoraAsc(
-    Long medicoId,
+    String medicoId,
     LocalDateTime start,
     LocalDateTime end,
     String estado
   );
 
-  boolean existsByMedicoIdAndFechaHoraAndEstadoNot(Long medicoId, LocalDateTime fechaHora, String estado);
+  boolean existsByMedicoIdAndFechaHoraAndEstadoNot(String medicoId, LocalDateTime fechaHora, String estado);
 }
