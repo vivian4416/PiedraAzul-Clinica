@@ -54,6 +54,14 @@ public class UsuarioService {
     String lastName = normalizarTexto(request.apellido());
     String email = normalizarEmail(request.email());
 
+    Map<String, Object> attrs = new LinkedHashMap<>();
+    if (request.documento() != null && !request.documento().isBlank()) {
+      attrs.put("documento", List.of(request.documento().trim()));
+    }
+    if (request.celular() != null && !request.celular().isBlank()) {
+      attrs.put("celular", List.of(request.celular().trim()));
+    }
+
     KeycloakUserRep userRep = new KeycloakUserRep(
       null,
       login,
@@ -61,7 +69,7 @@ public class UsuarioService {
       lastName,
       email,
       enabled,
-      Map.of()
+      attrs
     );
 
     String userId = keycloak.createUser(userRep);
@@ -93,13 +101,23 @@ public class UsuarioService {
     String lastName = normalizarTexto(request.apellido());
     String email = normalizarEmail(request.email());
 
+    Map<String, Object> attrs = existing.attributes() != null
+      ? new LinkedHashMap<>(existing.attributes())
+      : new LinkedHashMap<>();
+    if (request.documento() != null && !request.documento().isBlank()) {
+      attrs.put("documento", List.of(request.documento().trim()));
+    }
+    if (request.celular() != null && !request.celular().isBlank()) {
+      attrs.put("celular", List.of(request.celular().trim()));
+    }
+
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("firstName", firstName);
     payload.put("lastName", lastName);
     payload.put("email", email);
     payload.put("enabled", enabled);
-    if (existing.attributes() != null && !existing.attributes().isEmpty()) {
-      payload.put("attributes", existing.attributes());
+    if (!attrs.isEmpty()) {
+      payload.put("attributes", attrs);
     }
 
     keycloak.updateUser(id, payload);

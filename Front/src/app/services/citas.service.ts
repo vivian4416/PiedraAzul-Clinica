@@ -10,6 +10,18 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+interface UsuarioMeResponse {
+  id: string;
+  login: string;
+  nombreCompleto: string;
+  apellido: string;
+  email: string;
+  rol: string;
+  activo: boolean;
+  documento: string | null;
+  celular: string | null;
+}
+
 interface BackendMedico {
   id: string;
   nombres: string;
@@ -221,7 +233,18 @@ export class CitasService {
     this.medicosSubject.next(medicos);
   }
 
+  async obtenerMiPerfil(): Promise<UsuarioMeResponse> {
+    if (!this.isBrowser) {
+      throw new Error('obtenerMiPerfil called outside browser');
+    }
+    return this.getApi<UsuarioMeResponse>('/usuarios/me');
+  }
+
   async obtenerConfiguracionAgendamiento(forceRefresh = false): Promise<ConfiguracionAgendamiento> {
+    if (!this.isBrowser) {
+      throw new Error('obtenerConfiguracionAgendamiento called outside browser');
+    }
+
     const cache = this.configuracionSubject.value;
     if (!forceRefresh && cache) {
       return cache;

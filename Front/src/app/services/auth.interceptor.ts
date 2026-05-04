@@ -15,6 +15,7 @@ export class AuthInterceptor implements HttpInterceptor {
           const cloned = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
           return next.handle(cloned);
         }
+        console.warn('[AuthInterceptor] Sin token para:', req.url, '| loggedIn:', this.auth.isLoggedIn());
         return next.handle(req);
       })
     );

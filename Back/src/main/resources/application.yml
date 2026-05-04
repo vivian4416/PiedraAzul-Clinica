@@ -31,4 +31,4 @@ keycloak:
     base-url: ${KEYCLOAK_BASE_URL:http://localhost:8080}
     realm: ${KEYCLOAK_REALM:PiedraAzul_Realm}
     client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:PiedraAzul_Postman}
-    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:M0H3YY1RZffHsCPt4pQxtFYBrJWY1TXR}
+    client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:TwLCFJauVgZLnaV2YRB3kHRwvuQaUFXc}

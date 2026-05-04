@@ -11,5 +11,7 @@ public record UsuarioCreateRequest(
   @NotBlank String apellido,
   @Email @NotBlank String email,
   @NotBlank String rol,
-  @NotNull Boolean activo
+  @NotNull Boolean activo,
+  String documento,
+  String celular
 ) {}

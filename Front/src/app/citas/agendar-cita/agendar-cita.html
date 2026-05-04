@@ -1,9 +1,11 @@
 <div class="container py-5 agendar-page">
   <div class="agendar-wrap">
-    <div *ngIf="mostrarToast" class="toast toast-success show mb-3" role="alert">
-      <i class="bi bi-check-circle-fill"></i>
-      {{ mensajeToast }}
-    </div>
+    @if (mostrarToast) {
+      <div class="toast toast-success show mb-3" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        {{ mensajeToast }}
+      </div>
+    }
 
     <div class="steps mb-4">
       <div class="step done">
@@ -22,40 +24,65 @@
       </div>
     </div>
 
-    <div class="card selector-card mb-3">
-      <div class="card-title">Paciente registrado</div>
-      <div class="disponibilidad-subtitle">Para agendar por la web debes validar tus datos de registro.</div>
-
-      <div class="row g-2">
-        <div class="col-12 col-md-5">
-          <label for="doc-paciente" class="form-label">Documento</label>
-          <input
-            id="doc-paciente"
-            type="text"
-            class="form-control"
-            placeholder="Ej: 79453201"
-            [(ngModel)]="documentoPaciente">
-        </div>
-        <div class="col-12 col-md-5">
-          <label for="cel-paciente" class="form-label">Celular</label>
-          <input
-            id="cel-paciente"
-            type="text"
-            class="form-control"
-            placeholder="10 dígitos"
-            [(ngModel)]="celularPaciente">
-        </div>
-        <div class="col-12 col-md-2 d-flex align-items-end">
-          <button type="button" class="btn btn-primary w-100" (click)="validarPacienteRegistrado()">Validar</button>
-        </div>
+    <!-- PACIENTE: nombre cargado automáticamente desde el perfil Keycloak -->
+    @if (esPaciente) {
+      <div class="card selector-card mb-3">
+        <div class="card-title">Paciente</div>
+        @if (pacienteRegistrado) {
+          <div class="registro-ok mt-2">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ getNombrePaciente() }}
+          </div>
+        } @else if (!cargando) {
+          <div class="disponibilidad-subtitle mt-2">Cargando tu perfil...</div>
+        }
+        @if (errorPaciente && !pacienteRegistrado) {
+          <div class="registro-error mt-2">{{ errorPaciente }}</div>
+        }
       </div>
+    }
 
-      <div *ngIf="pacienteRegistrado" class="registro-ok mt-3">
-        <i class="bi bi-check-circle-fill"></i>
-        Paciente validado: {{ pacienteRegistrado.nombres }} {{ pacienteRegistrado.apellidos }}
+    <!-- AGENDADOR / ADMIN: validación manual de paciente -->
+    @if (!esPaciente) {
+      <div class="card selector-card mb-3">
+        <div class="card-title">Paciente registrado</div>
+        <div class="disponibilidad-subtitle">Para agendar por la web debes validar los datos del paciente.</div>
+
+        <div class="row g-2">
+          <div class="col-12 col-md-5">
+            <label for="doc-paciente" class="form-label">Documento</label>
+            <input
+              id="doc-paciente"
+              type="text"
+              class="form-control"
+              placeholder="Ej: 79453201"
+              [(ngModel)]="documentoPaciente">
+          </div>
+          <div class="col-12 col-md-5">
+            <label for="cel-paciente" class="form-label">Celular</label>
+            <input
+              id="cel-paciente"
+              type="text"
+              class="form-control"
+              placeholder="10 dígitos"
+              [(ngModel)]="celularPaciente">
+          </div>
+          <div class="col-12 col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-primary w-100" (click)="validarPacienteRegistrado()">Validar</button>
+          </div>
+        </div>
+
+        @if (pacienteRegistrado) {
+          <div class="registro-ok mt-3">
+            <i class="bi bi-check-circle-fill"></i>
+            Paciente validado: {{ pacienteRegistrado.nombres }} {{ pacienteRegistrado.apellidos }}
+          </div>
+        }
+        @if (errorPaciente) {
+          <div class="registro-error mt-3">{{ errorPaciente }}</div>
+        }
       </div>
-      <div *ngIf="errorPaciente" class="registro-error mt-3">{{ errorPaciente }}</div>
-    </div>
+    }
 
     <div class="card selector-card mb-3">
       <div class="especialidad-head">
@@ -77,23 +104,24 @@
           [(ngModel)]="medicoSeleccionado"
           (ngModelChange)="onMedicoChange($event)">
           <option value="">Seleccionar...</option>
-          <option *ngFor="let medico of medicos" [value]="medico.id">
-            Dr/Dra. {{ medico.nombre }} {{ medico.apellido }}
-          </option>
+          @for (medico of medicos; track medico.id) {
+            <option [value]="medico.id">Dr/Dra. {{ medico.nombre }} {{ medico.apellido }}</option>
+          }
         </select>
       </div>
 
       <div class="field mb-0">
         <div class="field-label">Semana disponible</div>
         <div class="semanas-btns">
-          <button
-            type="button"
-            *ngFor="let semana of semanasDisponibles"
-            class="btn btn-sm"
-            [class.active]="semanaSeleccionada === semana"
-            (click)="seleccionarSemana(semana)">
-            {{ getSemanaLabel(semana) }}
-          </button>
+          @for (semana of semanasDisponibles; track semana) {
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.active]="semanaSeleccionada === semana"
+              (click)="seleccionarSemana(semana)">
+              {{ getSemanaLabel(semana) }}
+            </button>
+          }
         </div>
       </div>
     </div>
@@ -102,47 +130,49 @@
       <div class="card-title">Horarios disponibles</div>
       <div class="disponibilidad-subtitle">{{ getSubtituloDisponibilidad() }}</div>
 
-      <div *ngIf="cargando" class="empty-state">Cargando disponibilidad...</div>
-
-      <div *ngIf="!cargando && diasDisponibles.length === 0" class="empty-state">
-        No hay horarios disponibles para esta selección.
-      </div>
-
-      <div *ngIf="!cargando">
-        <div *ngFor="let dia of diasDisponibles" class="dia-slots-container">
-          <div class="dia-titulo">{{ dia.label }}</div>
-          <div class="slots-grid">
-            <button
-              type="button"
-              *ngFor="let hora of dia.horas"
-              class="slot-btn"
-              [class.slot-seleccionado]="slotSeleccionado?.label === dia.label && slotSeleccionado?.hora === hora"
-              (click)="seleccionarSlot(dia, hora)">
-              {{ hora }}
-            </button>
+      @if (cargando) {
+        <div class="empty-state">Cargando disponibilidad...</div>
+      } @else if (diasDisponibles.length === 0) {
+        <div class="empty-state">No hay horarios disponibles para esta selección.</div>
+      } @else {
+        @for (dia of diasDisponibles; track dia.fecha) {
+          <div class="dia-slots-container">
+            <div class="dia-titulo">{{ dia.label }}</div>
+            <div class="slots-grid">
+              @for (hora of dia.horas; track hora) {
+                <button
+                  type="button"
+                  class="slot-btn"
+                  [class.slot-seleccionado]="slotSeleccionado?.label === dia.label && slotSeleccionado?.hora === hora"
+                  (click)="seleccionarSlot(dia, hora)">
+                  {{ hora }}
+                </button>
+              }
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      }
     </div>
 
-    <div *ngIf="mostrarConfirmacion && slotSeleccionado" class="card confirm-card mb-3">
-      <div class="confirm-row">
-        <div class="confirm-icon">
-          <i class="bi bi-check-lg"></i>
+    @if (mostrarConfirmacion && slotSeleccionado) {
+      <div class="card confirm-card mb-3">
+        <div class="confirm-row">
+          <div class="confirm-icon">
+            <i class="bi bi-check-lg"></i>
+          </div>
+          <div>
+            <div class="confirm-title">Cita seleccionada</div>
+            <div class="confirm-subtitle">{{ slotSeleccionado.label }} a las {{ slotSeleccionado.hora }} · {{ getNombreMedico() }}</div>
+          </div>
+          <button type="button" class="btn btn-primary" [disabled]="!puedeConfirmar()" (click)="confirmarCita()">
+            {{ solicitudEnCurso ? 'Enviando...' : 'Confirmar cita' }}
+          </button>
         </div>
-        <div>
-          <div class="confirm-title">Cita seleccionada</div>
-          <div class="confirm-subtitle">{{ slotSeleccionado.label }} a las {{ slotSeleccionado.hora }} · {{ getNombreMedico() }}</div>
-        </div>
-        <button type="button" class="btn btn-primary" [disabled]="!puedeConfirmar()" (click)="confirmarCita()">
-          {{ solicitudEnCurso ? 'Enviando...' : 'Confirmar cita' }}
-        </button>
       </div>
-    </div>
-  </div>
+    }
 
-  <div class="modo-selector" aria-label="Selector de modo">
-    <button type="button" class="modo-chip active">Paciente</button>
-    <button type="button" class="modo-chip" (click)="irModoAgendador()">Agendador</button>
+    @if (esPaciente && errorPaciente && pacienteRegistrado) {
+      <div class="registro-error mb-3">{{ errorPaciente }}</div>
+    }
   </div>
 </div>

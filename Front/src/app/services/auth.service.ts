@@ -6,6 +6,7 @@ export type AppRol = 'ADMIN' | 'MEDICO' | 'PACIENTE' | '';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private keycloak: Keycloak | null = null;
+  private loginInFlight = false;
 
   private readonly url = 'http://localhost:8080';
   private readonly realm = 'PiedraAzul_Realm';
@@ -16,8 +17,9 @@ export class AuthService {
     this.keycloak = new Keycloak({ url: this.url, realm: this.realm, clientId: this.clientId });
     try {
       const authenticated = await this.keycloak.init({
-        onLoad: 'login-required',
-        pkceMethod: 'S256'
+        onLoad: 'check-sso',
+        pkceMethod: 'S256',
+        checkLoginIframe: false,
       });
       return authenticated as boolean;
     } catch (err) {
@@ -26,9 +28,15 @@ export class AuthService {
     }
   }
 
-  login() {
+  async login(redirectUri?: string): Promise<void> {
     if (!this.keycloak) throw new Error('AuthService not initialized');
-    this.keycloak.login();
+    if (this.loginInFlight) return;
+    this.loginInFlight = true;
+    try {
+      await this.keycloak.login({ redirectUri: redirectUri ?? window.location.href });
+    } finally {
+      this.loginInFlight = false;
+    }
   }
 
   logout() {

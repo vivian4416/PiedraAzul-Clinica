@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
@@ -9,17 +9,18 @@ import { AuthService } from '../services/auth.service';
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
-export class Header implements OnInit {
+export class Header {
   public nombreClinica = 'Piedra Azul';
   public subtitulo = 'Sistema de citas';
-  public nombreUsuario = '';
-  public rolLabel = '';
 
   constructor(private readonly auth: AuthService) {}
 
-  ngOnInit(): void {
-    this.nombreUsuario = this.auth.getFullName() || this.auth.getUsername();
-    this.rolLabel = this.auth.getRolLabel();
+  get nombreUsuario(): string {
+    return this.auth.getFullName() || this.auth.getUsername();
+  }
+
+  get rolLabel(): string {
+    return this.auth.getRolLabel();
   }
 
   get initiales(): string {
