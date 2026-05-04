@@ -39,7 +39,7 @@ export class ConfiguracionComponent implements OnInit {
 
   ventanaSemanas = 4;
   medicos: MedicoConfiguracion[] = [];
-  medicoSeleccionadoId: number | null = null;
+  medicoSeleccionadoId: string | null = null;
   medicoActivo = true;
   intervaloSlot = 20;
   disponibilidadEditor: Record<number, DisponibilidadEditor> = {};
@@ -77,7 +77,7 @@ export class ConfiguracionComponent implements OnInit {
     }
   }
 
-  seleccionarMedico(medicoId: number): void {
+  seleccionarMedico(medicoId: string): void {
     this.medicoSeleccionadoId = medicoId;
     const medico = this.medicos.find(m => m.id === medicoId);
     if (!medico) {
@@ -194,7 +194,7 @@ export class ConfiguracionComponent implements OnInit {
     });
   }
 
-  private aplicarConfiguracion(configuracion: ConfiguracionAgendamiento, medicoPreferidoId?: number): void {
+  private aplicarConfiguracion(configuracion: ConfiguracionAgendamiento, medicoPreferidoId?: string): void {
     this.ventanaSemanas = configuracion.ventanaSemanas;
     this.medicos = configuracion.medicos.map(m => ({
       ...m,

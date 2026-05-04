@@ -127,7 +127,7 @@ export class CrearCitaComponent implements OnInit {
     this.cargandoSlots = true;
 
     try {
-      await this.citasService.cargarSlots(Number.parseInt(medico, 10), fecha);
+      await this.citasService.cargarSlots(medico, fecha);
       if (requestSeq !== this.slotsRequestSeq) {
         return;
       }
@@ -245,7 +245,7 @@ export class CrearCitaComponent implements OnInit {
         genero: this.formPaciente.genero,
         fechaNacimiento: this.formPaciente.fnac,
         email: this.formPaciente.email,
-        medicoId: Number.parseInt(this.formCita.medico, 10),
+        medicoId: this.formCita.medico,
         fecha: this.formCita.fecha,
         hora: horaSeleccionada,
       });
@@ -317,7 +317,7 @@ export class CrearCitaComponent implements OnInit {
   }
 
   getNombreMedico(): string {
-    const medico = this.medicos.find(m => m.id === Number.parseInt(this.formCita.medico, 10));
+    const medico = this.medicos.find(m => m.id === this.formCita.medico);
     return medico ? `${medico.nombre} ${medico.apellido}` : '';
   }
 

@@ -3,6 +3,7 @@ package co.piedrazul.api.modules.medicos;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalTime;
@@ -14,7 +15,7 @@ public record ConfiguracionAgendamientoResponse(
 ) {}
 
 record MedicoConfiguracionResponse(
-  Long id,
+  String id,
   String nombres,
   String tipo,
   String especialidad,
@@ -35,7 +36,7 @@ record GuardarConfiguracionAgendamientoRequest(
 ) {}
 
 record MedicoConfiguracionUpdateRequest(
-  @NotNull Long id,
+  @NotBlank String id,
   @NotNull @Min(5) @Max(120) Integer intervaloMin,
   @NotNull Boolean activo,
   @NotNull List<@Valid DisponibilidadDiaUpdateRequest> disponibilidad

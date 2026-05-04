@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MedicoDisponibilidadRepository extends JpaRepository<MedicoDisponibilidad, Long> {
-  Optional<MedicoDisponibilidad> findByMedicoIdAndDiaSemana(Long medicoId, Integer diaSemana);
-  List<MedicoDisponibilidad> findByMedicoIdInOrderByMedicoIdAscDiaSemanaAsc(List<Long> medicoIds);
+  Optional<MedicoDisponibilidad> findByMedicoIdAndDiaSemana(String medicoId, Integer diaSemana);
+  List<MedicoDisponibilidad> findByMedicoIdInOrderByMedicoIdAscDiaSemanaAsc(List<String> medicoIds);
 
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("delete from MedicoDisponibilidad d where d.medicoId = :medicoId")
-  void deleteByMedicoId(@Param("medicoId") Long medicoId);
+  void deleteByMedicoId(@Param("medicoId") String medicoId);
 }

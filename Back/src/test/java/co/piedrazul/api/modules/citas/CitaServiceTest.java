@@ -17,6 +17,8 @@ import org.springframework.context.ApplicationEventPublisher;
 
 class CitaServiceTest {
 
+  private static final String MEDICO_ID = "795ee435-a5d2-4817-87b0-11632b46ff4c";
+
   @Test
   void fallaSiMedicoNoAtiendeEseDia() throws Exception {
     CitaRepository citaRepo = Mockito.mock(CitaRepository.class);
@@ -38,19 +40,19 @@ class CitaServiceTest {
     );
 
     Medico medico = new Medico();
-    setField(medico, "id", 1L);
+    setField(medico, "id", MEDICO_ID);
     setField(medico, "nombres", "Dr X");
     setField(medico, "intervaloMin", 20);
     setField(medico, "activo", true);
 
     when(configuracionCitasService.getVentanaSemanas()).thenReturn(52);
-    when(medicoService.obtenerActivoOFallar(1L)).thenReturn(medico);
-    when(medicoService.getDisponibilidadParaFecha(1L, LocalDate.of(2026, 3, 29))).thenReturn(null);
+    when(medicoService.obtenerActivoOFallar(MEDICO_ID)).thenReturn(medico);
+    when(medicoService.getDisponibilidadParaFecha(MEDICO_ID, LocalDate.of(2026, 3, 29))).thenReturn(null);
 
-    CrearCitaRequest req = new CrearCitaRequest("1", "A", "B", "300", "HOMBRE", null, null, 1L,
+    CrearCitaRequest req = new CrearCitaRequest("1", "A", "B", "300", "HOMBRE", null, null, MEDICO_ID,
       LocalDate.of(2026, 3, 29), LocalTime.of(8, 0));
 
-    assertThrows(AppException.class, () -> service.crearManual(req, 2L, "MANUAL"));
+    assertThrows(AppException.class, () -> service.crearManual(req, "user-sub-2", "MANUAL"));
   }
 
   private static void setField(Object target, String fieldName, Object value) throws Exception {

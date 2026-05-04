@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { CitasService, DiaDisponible } from '../../services/citas.service';
+import { AuthService } from '../../services/auth.service';
 import { Medico, Paciente } from '../../models/cita.model';
 
 @Component({
@@ -12,9 +13,9 @@ import { Medico, Paciente } from '../../models/cita.model';
   templateUrl: './agendar-cita.html',
   styleUrl: './agendar-cita.css',
 })
-// Flujo de agendamiento web del paciente con validacion previa de registro.
+// Flujo de agendamiento web del paciente con carga automática de perfil.
 export class AgendarCitaComponent implements OnInit {
-  modoActual: 'paciente' | 'agendador' = 'paciente';
+  esPaciente = false;
 
   medicos: Medico[] = [];
   medicoSeleccionado = '';
@@ -41,6 +42,7 @@ export class AgendarCitaComponent implements OnInit {
 
   constructor(
     private readonly citasService: CitasService,
+    private readonly auth: AuthService,
     private readonly router: Router,
     private readonly ngZone: NgZone,
     private readonly cdr: ChangeDetectorRef,
@@ -53,6 +55,7 @@ export class AgendarCitaComponent implements OnInit {
   private async cargarInicial(): Promise<void> {
     this.cargando = true;
     this.errorPaciente = '';
+    this.esPaciente = this.auth.hasRole('paciente');
 
     try {
       await this.citasService.inicializar();
@@ -61,15 +64,53 @@ export class AgendarCitaComponent implements OnInit {
       this.medicos = this.citasService.getMedicos();
 
       const primerMedico = this.medicos[0];
-      this.medicoSeleccionado = primerMedico ? String(primerMedico.id) : '';
+      this.medicoSeleccionado = primerMedico ? primerMedico.id : '';
       await this.cargarDisponibilidad();
     } catch {
       this.diasDisponibles = [];
       this.errorPaciente = 'No fue posible cargar la disponibilidad. Verifica la conexión con el backend.';
     } finally {
       this.cargando = false;
-      this.syncUi();
     }
+
+    // Para PACIENTE: carga automática del perfil sin bloquear la UI de disponibilidad.
+    if (this.esPaciente) {
+      void this.cargarPerfilPaciente();
+    }
+
+    this.syncUi();
+  }
+
+  private async cargarPerfilPaciente(): Promise<void> {
+    try {
+      const perfil = await this.citasService.obtenerMiPerfil();
+      const documento = perfil.documento ?? perfil.login;
+
+      if (!documento) {
+        this.errorPaciente = 'Tu perfil no tiene documento registrado. Contacta al administrador.';
+        this.syncUi();
+        return;
+      }
+
+      const paciente = await this.citasService.buscarPaciente(documento);
+      if (paciente) {
+        this.pacienteRegistrado = paciente;
+      } else {
+        // Fallback: construir desde el perfil Keycloak cuando aún no existe registro Paciente.
+        this.pacienteRegistrado = {
+          doc: documento,
+          nombres: perfil.nombreCompleto,
+          apellidos: perfil.apellido,
+          cel: perfil.celular ?? '',
+          genero: 'Otro',
+          fnac: undefined,
+          email: perfil.email || undefined,
+        };
+      }
+    } catch {
+      this.errorPaciente = 'No fue posible cargar tu perfil de paciente. Intenta recargar la página.';
+    }
+    this.syncUi();
   }
 
   async onMedicoChange(medicoId: string): Promise<void> {
@@ -104,7 +145,9 @@ export class AgendarCitaComponent implements OnInit {
     }
 
     if (!this.pacienteRegistrado) {
-      this.errorPaciente = 'Debes validar un paciente registrado antes de confirmar la cita.';
+      this.errorPaciente = this.esPaciente
+        ? 'Tu perfil de paciente aún se está cargando. Espera un momento.'
+        : 'Debes validar un paciente registrado antes de confirmar la cita.';
       return;
     }
 
@@ -116,7 +159,6 @@ export class AgendarCitaComponent implements OnInit {
     this.solicitudEnCurso = true;
     this.errorPaciente = '';
     const traceId = `web-cita-${Date.now()}`;
-    console.debug(`[${traceId}] iniciar confirmarCita`);
 
     if (this.guardandoTimeoutId) {
       clearTimeout(this.guardandoTimeoutId);
@@ -124,26 +166,19 @@ export class AgendarCitaComponent implements OnInit {
     }
 
     this.guardandoTimeoutId = setTimeout(() => {
-      if (!this.solicitudEnCurso) {
-        return;
-      }
+      if (!this.solicitudEnCurso) return;
       this.guardando = false;
       this.solicitudEnCurso = false;
       this.errorPaciente = 'La confirmación tardó más de lo esperado. Verifica en la tabla si la cita se creó e intenta recargar.';
-      console.warn(`[${traceId}] failsafe: guardando forzado a false por timeout UI`);
       this.guardandoTimeoutId = null;
       this.syncUi();
     }, 15000);
 
-    const medicoId = Number.parseInt(this.medicoSeleccionado, 10);
+    const medicoId = this.medicoSeleccionado;
     const fecha = this.slotSeleccionado.fecha;
     const hora = this.slotSeleccionado.hora;
-    const resumen = {
-      label: this.slotSeleccionado.label,
-      hora: this.slotSeleccionado.hora,
-    };
+    const resumen = { label: this.slotSeleccionado.label, hora: this.slotSeleccionado.hora };
 
-    // Libera el estado visual del boton inmediatamente.
     this.guardando = false;
 
     this.enviarCitaEnSegundoPlano(traceId, {
@@ -205,11 +240,6 @@ export class AgendarCitaComponent implements OnInit {
     }
   }
 
-  irModoAgendador(): void {
-    this.modoActual = 'agendador';
-    void this.router.navigate(['/crear-cita']);
-  }
-
   getSemanaLabel(semanaOffset: number): string {
     const start = this.getDateOffset(semanaOffset * 7);
     const end = this.getDateOffset((semanaOffset * 7) + 6);
@@ -217,11 +247,8 @@ export class AgendarCitaComponent implements OnInit {
   }
 
   getNombreMedico(): string {
-    const id = Number.parseInt(this.medicoSeleccionado, 10);
-    const medico = this.medicos.find(m => m.id === id);
-    if (!medico) {
-      return 'Selecciona un médico';
-    }
+    const medico = this.medicos.find(m => m.id === this.medicoSeleccionado);
+    if (!medico) return 'Selecciona un médico';
     return `Dr/Dra. ${medico.nombre} ${medico.apellido}`.trim();
   }
 
@@ -231,6 +258,11 @@ export class AgendarCitaComponent implements OnInit {
 
   puedeConfirmar(): boolean {
     return !!this.slotSeleccionado && !!this.pacienteRegistrado && !this.solicitudEnCurso;
+  }
+
+  getNombrePaciente(): string {
+    if (!this.pacienteRegistrado) return '';
+    return `${this.pacienteRegistrado.nombres} ${this.pacienteRegistrado.apellidos}`.trim();
   }
 
   private async enviarCitaEnSegundoPlano(
@@ -243,7 +275,7 @@ export class AgendarCitaComponent implements OnInit {
       genero: string;
       fechaNacimiento?: string;
       email?: string;
-      medicoId: number;
+      medicoId: string;
       fecha: string;
       hora: string;
     },
@@ -251,9 +283,7 @@ export class AgendarCitaComponent implements OnInit {
   ): Promise<void> {
     try {
       await this.citasService.crearCitaAutonoma(payload);
-      console.debug(`[${traceId}] cita guardada en backend`, { medicoId: payload.medicoId, fecha: payload.fecha, hora: payload.hora });
-
-      this.mensajeToast = `Cita web confirmada para ${resumen.label} a las ${resumen.hora}.`;
+      this.mensajeToast = `Cita confirmada para ${resumen.label} a las ${resumen.hora}.`;
       this.mostrarToast = true;
 
       if (this.toastTimeoutId) {
@@ -268,9 +298,7 @@ export class AgendarCitaComponent implements OnInit {
       }, 3200);
 
       this.cancelarSeleccion();
-      void this.cargarDisponibilidad()
-        .then(() => console.debug(`[${traceId}] disponibilidad recargada`))
-        .catch(() => console.warn(`[${traceId}] fallo recargando disponibilidad`));
+      void this.cargarDisponibilidad().catch(() => undefined);
     } catch (error: unknown) {
       console.error(`[${traceId}] error al confirmar cita`, error);
       this.errorPaciente = this.getMensajeErrorGuardado(error);
@@ -281,17 +309,15 @@ export class AgendarCitaComponent implements OnInit {
       }
       this.solicitudEnCurso = false;
       this.guardando = false;
-      console.debug(`[${traceId}] fin confirmarCita, solicitudEnCurso=false`);
       this.syncUi();
     }
   }
 
   private async cargarDisponibilidad(): Promise<void> {
-    const medicoId = Number.parseInt(this.medicoSeleccionado, 10);
+    const medicoId = this.medicoSeleccionado;
 
     this.slotSeleccionado = null;
     this.mostrarConfirmacion = false;
-    this.errorPaciente = '';
 
     if (!medicoId) {
       this.diasDisponibles = [];
@@ -304,7 +330,6 @@ export class AgendarCitaComponent implements OnInit {
       this.diasDisponibles = [...this.citasService.getDiasDisponibles()];
     } catch {
       this.diasDisponibles = [];
-      this.errorPaciente = 'No se pudo actualizar la disponibilidad para la semana seleccionada.';
     } finally {
       this.cargando = false;
       this.syncUi();
@@ -339,29 +364,16 @@ export class AgendarCitaComponent implements OnInit {
   private getMensajeErrorGuardado(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const backendMessage = this.extraerMensajeBackend(error.error);
-      if (backendMessage) {
-        return backendMessage;
-      }
-
-      if (error.status === 0) {
-        return 'No fue posible conectar con el backend para guardar la cita.';
-      }
-      if (error.status === 409) {
-        return 'El horario seleccionado ya no está disponible. Elige otro horario.';
-      }
-      if (error.status === 400) {
-        return 'Datos inválidos para crear la cita. Verifica la información del paciente.';
-      }
+      if (backendMessage) return backendMessage;
+      if (error.status === 0) return 'No fue posible conectar con el backend para guardar la cita.';
+      if (error.status === 409) return 'El horario seleccionado ya no está disponible. Elige otro horario.';
+      if (error.status === 400) return 'Datos inválidos para crear la cita. Verifica la información del paciente.';
     }
-
     return 'No se pudo crear la cita web. Intenta nuevamente en unos segundos.';
   }
 
   private extraerMensajeBackend(payload: unknown): string | null {
-    if (typeof payload !== 'object' || payload === null || !('message' in payload)) {
-      return null;
-    }
-
+    if (typeof payload !== 'object' || payload === null || !('message' in payload)) return null;
     const message = (payload as { message?: unknown }).message;
     return typeof message === 'string' && message.trim() ? message.trim() : null;
   }

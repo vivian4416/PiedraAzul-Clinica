@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>silent-check-sso</title>
+  </head>
+  <body>
+    <script>
+      (function() {
+        function parseQuery(q) {
+          var params = {};
+          q.replace(/^\?/, '').split('&').forEach(function(p) {
+            var kv = p.split('=');
+            params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+          });
+          return params;
+        }
+        var params = parseQuery(window.location.search);
+        if (params && params['kc_callback']) {
+          try { window.parent.postMessage({ type: 'kc_silent_check', args: params }, '*'); } catch(e){}
+        }
+      })();
+    </script>
+  </body>
+</html>

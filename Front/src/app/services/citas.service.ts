@@ -1,5 +1,5 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, firstValueFrom, timeout } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { Cita, Paciente, Medico } from '../models/cita.model';
@@ -10,14 +10,20 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-interface AuthResponse {
-  ok: boolean;
-  token: string;
-  role: string;
+interface UsuarioMeResponse {
+  id: string;
+  login: string;
+  nombreCompleto: string;
+  apellido: string;
+  email: string;
+  rol: string;
+  activo: boolean;
+  documento: string | null;
+  celular: string | null;
 }
 
 interface BackendMedico {
-  id: number;
+  id: string;
   nombres: string;
   tipo?: string;
   especialidad: string;
@@ -32,7 +38,7 @@ interface BackendDisponibilidadConfig {
 }
 
 interface BackendMedicoConfiguracion {
-  id: number;
+  id: string;
   nombres: string;
   tipo: string;
   especialidad: string;
@@ -73,7 +79,7 @@ interface BackendCitaItem {
 }
 
 interface BackendCitasPorFecha {
-  medicoId: number;
+  medicoId: string;
   medicoNombre: string;
   fecha: string;
   total: number;
@@ -101,7 +107,7 @@ export interface DisponibilidadConfig {
 }
 
 export interface MedicoConfiguracion {
-  id: number;
+  id: string;
   nombres: string;
   tipo: string;
   especialidad: string;
@@ -124,13 +130,9 @@ export class CitasService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   private readonly apiBase = 'http://localhost:8090/api/v1';
-  private readonly defaultLogin = { login: 'agendadora', password: atob('QWRtaW4xMjMh') };
   private readonly requestTimeoutMs = 12000;
-
-  private token: string | null = null;
-  private authPromise: Promise<void> | null = null;
   private initialized = false;
-  private currentMedicoId = 1;
+  private currentMedicoId = '';
   private currentFecha = this.getTodayIso();
 
   private readonly citasSubject = new BehaviorSubject<Cita[]>([]);
@@ -152,7 +154,7 @@ export class CitasService {
   constructor(private readonly http: HttpClient) {}
 
   async inicializar(): Promise<void> {
-    if (this.initialized) {
+    if (this.initialized && this.medicosSubject.value.length > 0) {
       return;
     }
 
@@ -161,15 +163,51 @@ export class CitasService {
       return;
     }
 
-    await this.obtenerConfiguracionAgendamiento(true);
-    await this.cargarMedicos();
+    // Carga medicos: primero intenta via configuracion, luego via listado simple.
+    try {
+      await this.obtenerConfiguracionAgendamiento(true);
+    } catch {
+      try {
+        await this.cargarMedicos();
+      } catch {
+        // Sin conexion o sin autenticacion: medicos quedara vacio.
+      }
+    }
+
+    if (this.medicosSubject.value.length === 0) {
+      try {
+        await this.cargarMedicos();
+      } catch {
+        // Intento final fallido: se notificara al componente via medicos vacio.
+      }
+    }
+
     const medicos = this.medicosSubject.value;
-    const medicoBase = medicos.length > 0 ? medicos[0].id : 1;
+    const medicoBase = medicos.length > 0 ? medicos[0].id : '';
     this.currentMedicoId = medicoBase;
     this.currentFecha = this.getTodayIso();
-    await this.cargarCitasPorFiltro(medicoBase, this.currentFecha);
-    await this.cargarSlots(medicoBase, this.currentFecha);
-    await this.cargarDiasDisponibles(medicoBase, 0);
+
+    // PACIENTE no puede listar citas (403); se maneja silenciosamente.
+    if (medicoBase) {
+      try {
+        await this.cargarCitasPorFiltro(medicoBase, this.currentFecha);
+      } catch {
+        this.citasSubject.next([]);
+      }
+
+      try {
+        await this.cargarSlots(medicoBase, this.currentFecha);
+      } catch {
+        // Sin slots iniciales; se cargan cuando el usuario selecciona medico/fecha.
+      }
+
+      try {
+        await this.cargarDiasDisponibles(medicoBase, 0);
+      } catch {
+        // Sin dias disponibles iniciales.
+      }
+    }
+
     this.initialized = true;
   }
 
@@ -195,7 +233,18 @@ export class CitasService {
     this.medicosSubject.next(medicos);
   }
 
+  async obtenerMiPerfil(): Promise<UsuarioMeResponse> {
+    if (!this.isBrowser) {
+      throw new Error('obtenerMiPerfil called outside browser');
+    }
+    return this.getApi<UsuarioMeResponse>('/usuarios/me');
+  }
+
   async obtenerConfiguracionAgendamiento(forceRefresh = false): Promise<ConfiguracionAgendamiento> {
+    if (!this.isBrowser) {
+      throw new Error('obtenerConfiguracionAgendamiento called outside browser');
+    }
+
     const cache = this.configuracionSubject.value;
     if (!forceRefresh && cache) {
       return cache;
@@ -240,14 +289,14 @@ export class CitasService {
     return nuevaConfiguracion;
   }
 
-  async cargarCitasPorFiltro(medicoId: number, fecha: string): Promise<void> {
+  async cargarCitasPorFiltro(medicoId: string, fecha: string): Promise<void> {
     if (!this.isBrowser) {
       return;
     }
 
     this.currentFecha = fecha;
 
-    if (medicoId === 0) {
+    if (!medicoId) {
       const medicos = this.medicosSubject.value;
       if (medicos.length === 0) {
         await this.cargarMedicos();
@@ -267,13 +316,13 @@ export class CitasService {
     this.citasSubject.next(citas);
   }
 
-  async cargarSlots(medicoId: number, fecha: string): Promise<void> {
+  async cargarSlots(medicoId: string, fecha: string): Promise<void> {
     if (!this.isBrowser) {
       return;
     }
 
     const params = new HttpParams()
-      .set('medicoId', String(medicoId))
+      .set('medicoId', medicoId)
       .set('fecha', fecha);
 
     const data = await this.getApi<BackendSlotsResponse>('/citas/slots', params);
@@ -282,7 +331,7 @@ export class CitasService {
     this.ocupadosSubject.next(slots.filter(s => !s.disponible).map(s => s.hora));
   }
 
-  async cargarDiasDisponibles(medicoId: number, semanaOffset: number): Promise<void> {
+  async cargarDiasDisponibles(medicoId: string, semanaOffset: number): Promise<void> {
     if (!this.isBrowser) {
       return;
     }
@@ -308,7 +357,7 @@ export class CitasService {
       const fechaIso = this.toLocalIsoDate(fecha);
 
       const params = new HttpParams()
-        .set('medicoId', String(medicoId))
+        .set('medicoId', medicoId)
         .set('fecha', fechaIso);
 
       try {
@@ -380,7 +429,7 @@ export class CitasService {
     genero: string;
     fechaNacimiento?: string;
     email?: string;
-    medicoId: number;
+    medicoId: string;
     fecha: string;
     hora: string;
   }): Promise<void> {
@@ -420,7 +469,7 @@ export class CitasService {
     genero: string;
     fechaNacimiento?: string;
     email?: string;
-    medicoId: number;
+    medicoId: string;
     fecha: string;
     hora: string;
   }): Promise<void> {
@@ -455,7 +504,7 @@ export class CitasService {
     return this.citasSubject.value;
   }
 
-  getCitasPorMedico(medicoId: number): Cita[] {
+  getCitasPorMedico(medicoId: string): Cita[] {
     return this.citasSubject.value.filter(c => c.medico === medicoId);
   }
 
@@ -512,9 +561,9 @@ export class CitasService {
     return this.configuracionSubject.value;
   }
 
-  private async fetchCitas(medicoId: number, fecha: string): Promise<Cita[]> {
+  private async fetchCitas(medicoId: string, fecha: string): Promise<Cita[]> {
     const params = new HttpParams()
-      .set('medicoId', String(medicoId))
+      .set('medicoId', medicoId)
       .set('fecha', fecha);
 
     const data = await this.getApi<BackendCitasPorFecha>('/citas', params);
@@ -532,46 +581,16 @@ export class CitasService {
     }));
   }
 
-  private async ensureAuthenticated(): Promise<void> {
-    // Login tecnico temporal hasta integrar autenticacion externa.
-    if (!this.isBrowser) {
-      return;
-    }
-
-    if (this.token) {
-      return;
-    }
-
-    this.authPromise ??= (async () => {
-      console.debug('[CitasService] login tecnico iniciado');
-      const auth = await firstValueFrom(this.http.post<AuthResponse>(
-        `${this.apiBase}/auth/login`,
-        this.defaultLogin
-      ).pipe(timeout(this.requestTimeoutMs)));
-
-      this.token = auth.token;
-      console.debug('[CitasService] login tecnico completado');
-    })().finally(() => {
-      this.authPromise = null;
-    });
-
-    await this.authPromise;
-  }
-
   private async getApi<T>(path: string, params?: HttpParams): Promise<T> {
-    await this.ensureAuthenticated();
     const response = await firstValueFrom(this.http.get<ApiResponse<T>>(`${this.apiBase}${path}`, {
-      headers: this.buildHeaders(),
       params,
     }).pipe(timeout(this.requestTimeoutMs)));
     return response.data;
   }
 
   private async postApi<T = unknown>(path: string, body: unknown): Promise<T> {
-    await this.ensureAuthenticated();
     const startedAt = Date.now();
     const response = await firstValueFrom(this.http.post<ApiResponse<T>>(`${this.apiBase}${path}`, body, {
-      headers: this.buildHeaders(),
     }).pipe(timeout(this.requestTimeoutMs)));
     const elapsed = Date.now() - startedAt;
     if (path === '/citas/autonoma') {
@@ -581,18 +600,9 @@ export class CitasService {
   }
 
   private async putApi<T = unknown>(path: string, body: unknown): Promise<T> {
-    await this.ensureAuthenticated();
     const response = await firstValueFrom(this.http.put<ApiResponse<T>>(`${this.apiBase}${path}`, body, {
-      headers: this.buildHeaders(),
     }).pipe(timeout(this.requestTimeoutMs)));
     return response.data;
-  }
-
-  private buildHeaders(): HttpHeaders {
-    return new HttpHeaders({
-      Authorization: `Bearer ${this.token ?? ''}`,
-      'Content-Type': 'application/json',
-    });
   }
 
   private getTodayIso(): string {

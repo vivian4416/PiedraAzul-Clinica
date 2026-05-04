@@ -15,16 +15,16 @@ export class CitasComponent implements OnInit {
   citas: Cita[] = [];
   citasFiltradas: Cita[] = [];
 
-  medicosOptions: Array<{ id: number; nombre: string }> = [{ id: 0, nombre: 'Todos' }];
+  medicosOptions: Array<{ id: string; nombre: string }> = [{ id: '', nombre: 'Todos' }];
 
-  filtroMedico: number = 0;
+  filtroMedico: string = '';
   filtroFecha: string = new Date().toISOString().slice(0, 10);
-  filtroMedicoPendiente: number = 0;
+  filtroMedicoPendiente: string = '';
   filtroFechaPendiente: string = new Date().toISOString().slice(0, 10);
   cargando = false;
   aplicandoFiltros = false;
   errorCarga = '';
-  
+
   estadisticas = {
     total: 0,
     confirmadas: 0,
@@ -50,7 +50,7 @@ export class CitasComponent implements OnInit {
     try {
       await this.citasService.inicializar();
       this.medicosOptions = [
-        { id: 0, nombre: 'Todos' },
+        { id: '', nombre: 'Todos' },
         ...this.citasService.getMedicos().map(m => ({
           id: m.id,
           nombre: `${m.nombre} ${m.apellido}`.trim(),
@@ -58,7 +58,7 @@ export class CitasComponent implements OnInit {
       ];
 
       const primerMedico = this.citasService.getMedicos()[0];
-      this.filtroMedico = primerMedico ? primerMedico.id : 0;
+      this.filtroMedico = primerMedico ? primerMedico.id : '';
       this.filtroMedicoPendiente = this.filtroMedico;
       this.filtroFechaPendiente = this.filtroFecha;
       await this.aplicarFiltros();
@@ -77,7 +77,7 @@ export class CitasComponent implements OnInit {
     this.filtroFechaPendiente = fecha;
   }
 
-  onFiltroMedicoChange(medicoId: number): void {
+  onFiltroMedicoChange(medicoId: string): void {
     this.filtroMedicoPendiente = medicoId;
   }
 
@@ -97,7 +97,6 @@ export class CitasComponent implements OnInit {
       this.citas = [...citas];
       this.citasFiltradas = [...citas];
 
-      // Solo refleja el filtro como "aplicado" cuando la data ya fue cargada.
       this.filtroMedico = medicoId;
       this.filtroFecha = fecha;
       this.actualizarEstadisticas();
@@ -136,14 +135,13 @@ export class CitasComponent implements OnInit {
   }
 
   exportarCSV(): void {
-    // Exporta la vista actual filtrada en un CSV simple.
     const rows = [
       ['Hora', 'Paciente', 'Documento', 'Celular', 'Origen', 'Estado'],
       ...this.citasFiltradas.map(c => [c.hora, c.paciente, c.doc, c.cel, c.origen, c.estado])
     ];
     const csv = rows.map(r => r.join(',')).join('\n');
     const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+    a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
     a.download = 'citas_' + (this.filtroFecha || 'hoy') + '.csv';
     a.click();
   }

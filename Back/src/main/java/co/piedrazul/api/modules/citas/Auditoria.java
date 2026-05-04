@@ -1,12 +1,13 @@
 package co.piedrazul.api.modules.citas;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "auditoria")
@@ -16,7 +17,7 @@ public class Auditoria {
   private Long id;
 
   @Column(name = "usuario_id")
-  private Long usuarioId;
+  private String usuarioId;
 
   @Column(nullable = false)
   private String accion;
@@ -31,7 +32,7 @@ public class Auditoria {
   @Column(name = "fecha_hora")
   private LocalDateTime fechaHora;
 
-  public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+  public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
   public void setAccion(String accion) { this.accion = accion; }
   public void setEntidad(String entidad) { this.entidad = entidad; }
   public void setEntidadId(Long entidadId) { this.entidadId = entidadId; }

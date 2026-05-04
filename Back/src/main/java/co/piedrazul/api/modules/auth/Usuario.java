@@ -35,4 +35,10 @@ public class Usuario {
   public String getNombreCompleto() { return nombreCompleto; }
   public String getRol() { return rol; }
   public boolean isActivo() { return activo; }
+
+  public void setLogin(String login) { this.login = login; }
+  public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+  public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
+  public void setRol(String rol) { this.rol = rol; }
+  public void setActivo(boolean activo) { this.activo = activo; }
 }

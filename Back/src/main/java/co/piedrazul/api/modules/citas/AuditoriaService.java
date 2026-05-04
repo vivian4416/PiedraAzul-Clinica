@@ -1,6 +1,7 @@
 package co.piedrazul.api.modules.citas;
 
 import java.time.LocalDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -25,7 +26,7 @@ public class AuditoriaService {
     a.setAccion("CREAR_CITA");
     a.setEntidad("citas");
     a.setEntidadId(event.citaId());
-    a.setDetalle("{\"medicoId\":" + event.medicoId() + ",\"esNuevoPaciente\":" + event.esNuevoPaciente() + "}");
+    a.setDetalle("{\"medicoId\":\"" + event.medicoId() + "\",\"esNuevoPaciente\":" + event.esNuevoPaciente() + "}");
     a.setFechaHora(LocalDateTime.now());
     auditoriaRepository.save(a);
 

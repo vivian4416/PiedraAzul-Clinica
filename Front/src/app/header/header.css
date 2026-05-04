@@ -115,13 +115,39 @@
   font-weight: 600;
 }
 
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .user-name {
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
   font-size: 10px;
   color: var(--hint);
+}
+
+.btn-logout {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--hint);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  transition: color .12s, background .12s;
+}
+
+.btn-logout:hover {
+  color: var(--danger, #dc3545);
+  background: var(--bg);
 }

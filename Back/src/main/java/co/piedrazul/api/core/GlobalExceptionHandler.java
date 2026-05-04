@@ -2,6 +2,8 @@ package co.piedrazul.api.core;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,6 +24,18 @@ public class GlobalExceptionHandler {
       .map(err -> err.getField() + ": " + err.getDefaultMessage())
       .orElse("Solicitud invalida");
     return ResponseEntity.badRequest().body(ApiError.of("BAD_REQUEST", message));
+  }
+
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+      .body(ApiError.of("UNAUTHORIZED", "No autenticado o token invalido"));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+      .body(ApiError.of("FORBIDDEN", "No tienes permisos para ejecutar esta operacion"));
   }
 
   @ExceptionHandler(Exception.class)

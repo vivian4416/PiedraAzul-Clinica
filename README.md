@@ -77,7 +77,7 @@ Frontend:
 Backend:
 - Java 21
 - Spring Boot 3.5
-- Spring Security + JWT
+- Spring Security (OAuth2 Resource Server JWT) + Keycloak
 - Spring Data JPA
 - H2 (default) / MySQL (opcional)
 
@@ -127,8 +127,13 @@ Proximamente se usara MySQL
 
 ## Endpoints principales
 
-Auth:
-- POST /api/v1/auth/login
+Usuarios (Keycloak):
+- GET /api/v1/usuarios (ADMIN)
+- GET /api/v1/usuarios/{id} (ADMIN)
+- POST /api/v1/usuarios (ADMIN)
+- PUT /api/v1/usuarios/{id} (ADMIN)
+- DELETE /api/v1/usuarios/{id} (ADMIN)
+- GET /api/v1/usuarios/me
 
 Citas:
 - GET /api/v1/citas?medicoId=&fecha=
@@ -146,9 +151,21 @@ Medicos:
 
 ## Seguridad y autenticacion
 
-- El backend protege endpoints por rol.
-- El frontend actual consume la API con un login tecnico interno en CitasService para operar los modulos de citas.
-- El endpoint de login (/auth/login) esta disponible para evolucionar a login de usuario completo en UI.
+- Autenticacion y autorizacion se basan en tokens de Keycloak (Bearer).
+- Los roles se leen desde `realm_access.roles` y se mapean a `ROLE_ADMIN`, `ROLE_AGENDADOR`, `ROLE_MEDICO`, `ROLE_PACIENTE`.
+- El endpoint legacy `POST /api/v1/auth/login` esta deshabilitado (responde 410).
+
+### Configuracion Keycloak (backend)
+
+En [Back/src/main/resources/application.yml](Back/src/main/resources/application.yml) se configura:
+- `spring.security.oauth2.resourceserver.jwt.issuer-uri` (realm emisor)
+- `keycloak.admin.*` (cliente confidencial con Service Account) para el CRUD de usuarios.
+
+Variables de entorno recomendadas:
+- `KEYCLOAK_BASE_URL` (default `http://localhost:8080`)
+- `KEYCLOAK_REALM` (default `PiedraAzul_Realm`)
+- `KEYCLOAK_ADMIN_CLIENT_ID` (default `PiedraAzul_Admin`)
+- `KEYCLOAK_ADMIN_CLIENT_SECRET` (obligatorio en tu entorno)
 
 ## Problemas comunes
 

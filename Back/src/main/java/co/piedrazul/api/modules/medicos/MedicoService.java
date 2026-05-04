@@ -33,7 +33,7 @@ public class MedicoService {
     return medicoRepository.findByActivoTrueOrderByNombresAsc();
   }
 
-  public Medico obtenerActivoOFallar(Long id) {
+  public Medico obtenerActivoOFallar(String id) {
     Medico medico = medicoRepository.findById(id)
       .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Medico no encontrado"));
 
@@ -43,7 +43,7 @@ public class MedicoService {
     return medico;
   }
 
-  public MedicoDisponibilidad getDisponibilidadParaFecha(Long medicoId, LocalDate fecha) {
+  public MedicoDisponibilidad getDisponibilidadParaFecha(String medicoId, LocalDate fecha) {
     DayOfWeek day = fecha.getDayOfWeek();
     int dia = day.getValue();
     return disponibilidadRepository.findByMedicoIdAndDiaSemana(medicoId, dia).orElse(null);
@@ -52,13 +52,13 @@ public class MedicoService {
   public ConfiguracionAgendamientoResponse obtenerConfiguracionAgendamiento() {
     int ventanaSemanas = configuracionCitasService.getVentanaSemanas();
     List<Medico> medicos = medicoRepository.findAllByOrderByNombresAsc();
-    List<Long> medicoIds = medicos.stream().map(Medico::getId).toList();
+    List<String> medicoIds = medicos.stream().map(Medico::getId).toList();
 
     if (medicoIds.isEmpty()) {
       return new ConfiguracionAgendamientoResponse(ventanaSemanas, List.of());
     }
 
-    Map<Long, List<DisponibilidadDiaResponse>> disponibilidadPorMedico = disponibilidadRepository
+    Map<String, List<DisponibilidadDiaResponse>> disponibilidadPorMedico = disponibilidadRepository
       .findByMedicoIdInOrderByMedicoIdAscDiaSemanaAsc(medicoIds)
       .stream()
       .collect(Collectors.groupingBy(
@@ -88,8 +88,8 @@ public class MedicoService {
   public ConfiguracionAgendamientoResponse guardarConfiguracionAgendamiento(GuardarConfiguracionAgendamientoRequest request) {
     configuracionCitasService.actualizarVentanaSemanas(request.ventanaSemanas());
 
-    List<Long> ids = request.medicos().stream().map(MedicoConfiguracionUpdateRequest::id).toList();
-    Map<Long, Medico> medicosDb = medicoRepository.findAllById(ids)
+    List<String> ids = request.medicos().stream().map(MedicoConfiguracionUpdateRequest::id).toList();
+    Map<String, Medico> medicosDb = medicoRepository.findAllById(ids)
       .stream()
       .collect(Collectors.toMap(Medico::getId, Function.identity()));
 

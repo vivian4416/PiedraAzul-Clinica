@@ -1,12 +1,11 @@
 package co.piedrazul.api.modules.auth;
 
-import co.piedrazul.api.core.AppException;
-import co.piedrazul.api.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-@Service
+import co.piedrazul.api.core.AppException;
+import co.piedrazul.api.security.JwtService;
+@Deprecated
 public class AuthService {
   private final UsuarioRepository usuarioRepository;
   private final PasswordEncoder passwordEncoder;
