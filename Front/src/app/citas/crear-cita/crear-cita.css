@@ -166,6 +166,44 @@
   margin-left: 4px;
 }
 
+.autocomplete-panel {
+  border: 1px solid #d7e3ea;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(14, 33, 58, 0.08);
+  overflow: hidden;
+}
+
+.autocomplete-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #eef2f6;
+  background: #fff;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: 0;
+}
+
+.autocomplete-item:hover {
+  background: #f4f8fb;
+}
+
+.autocomplete-item strong {
+  color: #17324d;
+}
+
+.autocomplete-item span,
+.autocomplete-item small {
+  color: #5f6770;
+}
+
 /* BOTONES */
 .btn {
   font-size: 14px;

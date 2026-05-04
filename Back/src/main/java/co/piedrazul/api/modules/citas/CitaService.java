@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,8 +99,102 @@ public class CitaService {
       .toList();
 
     int disponibles = (int) slots.stream().filter(SlotDto::disponible).count();
+    int total = items.size();
 
-    return new CitasPorFechaResponse(medicoId, medico.getNombres(), fecha, items.size(), disponibles, items, slots);
+    return new CitasPorFechaResponse(
+      medicoId,
+      medico.getNombres(),
+      fecha,
+      total,
+      total,
+      0,
+      total,
+      total > 0 ? 1 : 0,
+      disponibles,
+      items,
+      slots
+    );
+  }
+
+  public CitasPorFechaResponse listarPorMedicoYFechaPaginado(String medicoId, LocalDate fecha, int page, int size) {
+    validarPaginacion(page, size);
+
+    Medico medico = medicoService.obtenerActivoOFallar(medicoId);
+    LocalDateTime start = fecha.atStartOfDay();
+    LocalDateTime end = fecha.plusDays(1).atStartOfDay();
+
+    List<Cita> citasDia = citaRepository.findByMedicoIdAndFechaHoraBetweenAndEstadoNotOrderByFechaHoraAsc(
+      medicoId, start, end, "CANCELADA"
+    );
+
+    Page<Cita> citasPaginadas = citaRepository.findByMedicoIdAndFechaHoraBetweenAndEstadoNotOrderByFechaHoraAsc(
+      medicoId,
+      start,
+      end,
+      "CANCELADA",
+      PageRequest.of(page, size)
+    );
+    List<Cita> citas = citasPaginadas.getContent();
+
+    MedicoDisponibilidad disp = medicoService.getDisponibilidadParaFecha(medicoId, fecha);
+    List<SlotDto> slots = List.of();
+    if (disp != null) {
+      List<LocalTime> ocupados = citasDia.stream().map(c -> c.getFechaHora().toLocalTime()).toList();
+      slots = slotService.calcularSlotsDisponibles(disp.getHoraInicio(), disp.getHoraFin(), medico.getIntervaloMin(), ocupados);
+    }
+
+    Set<Long> pacienteIds = citas.stream().map(Cita::getPacienteId).collect(Collectors.toSet());
+    Map<Long, Paciente> pacientes = pacienteRepository.findAllById(pacienteIds)
+      .stream()
+      .collect(Collectors.toMap(Paciente::getId, p -> p));
+
+    List<CitaListItemDto> items = citas.stream()
+      .map(c -> {
+        Paciente paciente = pacientes.get(c.getPacienteId());
+        String pacienteNombre = paciente == null
+          ? "Paciente #" + c.getPacienteId()
+          : (paciente.getNombres() + " " + paciente.getApellidos()).trim();
+
+        return new CitaListItemDto(
+          c.getId(),
+          c.getFechaHora().toLocalTime(),
+          c.getEstado(),
+          c.getOrigen(),
+          null,
+          c.getPacienteId(),
+          pacienteNombre,
+          paciente == null ? "" : paciente.getNumDocumento(),
+          paciente == null ? "" : paciente.getCelular()
+        );
+      })
+      .toList();
+
+    int disponibles = (int) slots.stream().filter(SlotDto::disponible).count();
+    long totalRegistros = citasPaginadas.getTotalElements();
+    int totalPaginas = citasPaginadas.getTotalPages();
+
+    return new CitasPorFechaResponse(
+      medicoId,
+      medico.getNombres(),
+      fecha,
+      (int) totalRegistros,
+      totalRegistros,
+      page,
+      size,
+      totalPaginas,
+      disponibles,
+      items,
+      slots
+    );
+  }
+
+  private void validarPaginacion(int page, int size) {
+    if (page < 0) {
+      throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "El numero de pagina debe ser mayor o igual a 0");
+    }
+    if (size < 1 || size > 200) {
+      throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "El tamanio de pagina debe estar entre 1 y 200");
+    }
   }
 
   @Transactional

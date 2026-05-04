@@ -1,4 +1,6 @@
 .vscode/
+.idea/
+*.iml
 Front/.angular/
 Front/node_modules/
 target/

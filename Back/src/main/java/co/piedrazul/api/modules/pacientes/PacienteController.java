@@ -1,5 +1,6 @@
 package co.piedrazul.api.modules.pacientes;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,5 +23,13 @@ public class PacienteController {
   public Map<String, Object> buscar(@RequestParam String documento) {
     Paciente p = pacienteService.buscarPorDocumento(documento.trim());
     return Map.of("ok", true, "data", p);
+  }
+
+  @GetMapping("/sugerencias")
+  @PreAuthorize("isAuthenticated()")
+  public Map<String, Object> sugerencias(@RequestParam String documento) {
+    String prefijo = documento == null ? "" : documento.trim();
+    List<PacienteAutocompleteDto> data = pacienteService.sugerenciasPorDocumento(prefijo);
+    return Map.of("ok", true, "data", data);
   }
 }

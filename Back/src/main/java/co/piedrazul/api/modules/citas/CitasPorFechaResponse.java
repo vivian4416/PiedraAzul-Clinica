@@ -8,6 +8,10 @@ public record CitasPorFechaResponse(
   String medicoNombre,
   LocalDate fecha,
   int total,
+  long totalRegistros,
+  int pagina,
+  int tamanio,
+  int totalPaginas,
   int disponibles,
   List<CitaListItemDto> citas,
   List<SlotDto> slots

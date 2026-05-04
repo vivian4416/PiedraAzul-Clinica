@@ -4,7 +4,7 @@
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card">
                 <div class="stat-label">Total de citas</div>
-                <div class="stat-value">{{ estadisticas.total }}</div>
+                <div class="stat-value">{{ totalRegistros }}</div>
                 <div class="stat-meta">citas registradas</div>
             </div>
         </div>
@@ -120,6 +120,20 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <div class="card-footer d-flex align-items-center justify-content-between">
+            <small class="text-muted">
+                Pagina {{ totalPaginas === 0 ? 0 : (paginaActual + 1) }} de {{ totalPaginas }}
+                · Mostrando {{ citasFiltradas.length }} de {{ totalRegistros }}
+            </small>
+            <div class="btn-group" role="group" aria-label="Paginacion de citas">
+                <button class="btn btn-sm btn-outline-secondary" [disabled]="aplicandoFiltros || paginaActual === 0" (click)="paginaAnterior()">
+                    Anterior
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" [disabled]="aplicandoFiltros || (paginaActual + 1 >= totalPaginas)" (click)="paginaSiguiente()">
+                    Siguiente
+                </button>
+            </div>
         </div>
     </div>
 </div>

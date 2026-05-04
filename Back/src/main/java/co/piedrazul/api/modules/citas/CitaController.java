@@ -33,8 +33,13 @@ public class CitaController {
 
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR','MEDICO')")
-  public Map<String, Object> listar(@RequestParam String medicoId, @RequestParam LocalDate fecha) {
-    CitasPorFechaResponse data = citaService.listarPorMedicoYFecha(medicoId, fecha);
+  public Map<String, Object> listar(
+    @RequestParam String medicoId,
+    @RequestParam LocalDate fecha,
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "25") int size
+  ) {
+    CitasPorFechaResponse data = citaService.listarPorMedicoYFechaPaginado(medicoId, fecha, page, size);
     return Map.of("ok", true, "data", data);
   }
 

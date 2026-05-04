@@ -12,6 +12,7 @@ import { Cita } from '../models/cita.model';
 })
 // Tabla de citas con filtros por medico/fecha y exportacion CSV.
 export class CitasComponent implements OnInit {
+  readonly pageSize = 25;
   citas: Cita[] = [];
   citasFiltradas: Cita[] = [];
 
@@ -24,6 +25,9 @@ export class CitasComponent implements OnInit {
   cargando = false;
   aplicandoFiltros = false;
   errorCarga = '';
+  paginaActual = 0;
+  totalPaginas = 0;
+  totalRegistros = 0;
 
   estadisticas = {
     total: 0,
@@ -81,7 +85,7 @@ export class CitasComponent implements OnInit {
     this.filtroMedicoPendiente = medicoId;
   }
 
-  async aplicarFiltros(): Promise<void> {
+  async aplicarFiltros(page = 0): Promise<void> {
     if (this.aplicandoFiltros) {
       return;
     }
@@ -92,10 +96,13 @@ export class CitasComponent implements OnInit {
     this.errorCarga = '';
 
     try {
-      await this.citasService.cargarCitasPorFiltro(medicoId, fecha);
+      const paginacion = await this.citasService.cargarCitasPorFiltro(medicoId, fecha, page, this.pageSize);
       const citas = this.citasService.getCitas();
       this.citas = [...citas];
       this.citasFiltradas = [...citas];
+      this.paginaActual = paginacion.pagina;
+      this.totalPaginas = paginacion.totalPaginas;
+      this.totalRegistros = paginacion.total;
 
       this.filtroMedico = medicoId;
       this.filtroFecha = fecha;
@@ -106,6 +113,20 @@ export class CitasComponent implements OnInit {
       this.aplicandoFiltros = false;
       this.syncUi();
     }
+  }
+
+  async paginaAnterior(): Promise<void> {
+    if (this.paginaActual <= 0 || this.aplicandoFiltros) {
+      return;
+    }
+    await this.aplicarFiltros(this.paginaActual - 1);
+  }
+
+  async paginaSiguiente(): Promise<void> {
+    if (this.aplicandoFiltros || this.paginaActual + 1 >= this.totalPaginas) {
+      return;
+    }
+    await this.aplicarFiltros(this.paginaActual + 1);
   }
 
   private syncUi(): void {

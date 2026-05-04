@@ -26,6 +26,17 @@
                 <i class="bi bi-search"></i> Buscar
               </button>
             </div>
+            <div *ngIf="pacientesSugeridos.length > 0" class="autocomplete-panel mt-2">
+              <button
+                type="button"
+                class="autocomplete-item"
+                *ngFor="let paciente of pacientesSugeridos"
+                (click)="seleccionarPacienteSugerido(paciente)">
+                <strong>{{ paciente.doc }}</strong>
+                <span>{{ paciente.nombres }} {{ paciente.apellidos }}</span>
+                <small>{{ paciente.cel }} · {{ paciente.genero }}</small>
+              </button>
+            </div>
             <div *ngIf="mensajeError('doc')" class="error-msg">{{ mensajeError('doc') }}</div>
           </div>
 

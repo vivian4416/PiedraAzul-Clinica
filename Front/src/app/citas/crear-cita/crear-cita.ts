@@ -56,10 +56,12 @@ export class CrearCitaComponent implements OnInit {
   };
 
   pacienteEncontrado: Paciente | null = null;
+  pacientesSugeridos: Paciente[] = [];
   mostrarToast = false;
   tipoToast: 'success' | 'error' = 'success';
   mensajeToast = '';
   private slotsRequestSeq = 0;
+  private documentoLookupTimer: ReturnType<typeof setTimeout> | null = null;
   guardando = false;
   cargandoSlots = false;
   private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -92,12 +94,14 @@ export class CrearCitaComponent implements OnInit {
     const doc = this.formPaciente.doc.trim();
     if (this.validarDocumento(doc)) {
       this.pacienteEncontrado = null;
+      this.pacientesSugeridos = [];
       return;
     }
     const paciente = await this.citasService.buscarPaciente(doc);
     
     if (paciente) {
       this.pacienteEncontrado = paciente;
+      this.pacientesSugeridos = [];
       this.formPaciente.nombres = paciente.nombres;
       this.formPaciente.apellidos = paciente.apellidos;
       this.formPaciente.cel = paciente.cel;
@@ -105,6 +109,22 @@ export class CrearCitaComponent implements OnInit {
     } else {
       this.pacienteEncontrado = null;
     }
+  }
+
+  seleccionarPacienteSugerido(paciente: Paciente): void {
+    this.formPaciente.doc = paciente.doc;
+    this.pacienteEncontrado = paciente;
+    this.pacientesSugeridos = [];
+    this.formPaciente.nombres = paciente.nombres;
+    this.formPaciente.apellidos = paciente.apellidos;
+    this.formPaciente.cel = paciente.cel;
+    this.formPaciente.genero = paciente.genero;
+    this.touched['doc'] = true;
+    this.touched['nombres'] = true;
+    this.touched['apellidos'] = true;
+    this.touched['cel'] = true;
+    this.touched['genero'] = true;
+    this.syncUi();
   }
 
   async cargarSlots(): Promise<void> {
@@ -180,8 +200,9 @@ export class CrearCitaComponent implements OnInit {
   }
 
   onDocumentoChange(value: string): void {
-    this.formPaciente.doc = value.trim();
+    this.formPaciente.doc = value.replace(/\s+/g, '');
     this.touched['doc'] = true;
+    this.programarAutocompletadoDocumento();
   }
 
   onCelularChange(value: string): void {
@@ -196,6 +217,50 @@ export class CrearCitaComponent implements OnInit {
 
   onBlur(field: string): void {
     this.touched[field] = true;
+  }
+
+  private programarAutocompletadoDocumento(): void {
+    if (this.documentoLookupTimer) {
+      clearTimeout(this.documentoLookupTimer);
+    }
+
+    const doc = this.formPaciente.doc.trim();
+    if (this.validarDocumento(doc)) {
+      this.pacienteEncontrado = null;
+      this.pacientesSugeridos = [];
+      this.syncUi();
+      return;
+    }
+
+    if (doc.length < 3) {
+      this.pacienteEncontrado = null;
+      this.pacientesSugeridos = [];
+      this.syncUi();
+      return;
+    }
+
+    this.documentoLookupTimer = setTimeout(() => {
+      void this.buscarSugerenciasDocumento(doc);
+    }, 250);
+  }
+
+  private async buscarSugerenciasDocumento(doc: string): Promise<void> {
+    try {
+      const sugeridos = await this.citasService.buscarPacientesSugeridos(doc);
+      if (doc !== this.formPaciente.doc.trim()) {
+        return;
+      }
+
+      this.pacientesSugeridos = sugeridos;
+      const exacto = sugeridos.find(paciente => paciente.doc === doc);
+      if (exacto) {
+        this.seleccionarPacienteSugerido(exacto);
+      }
+    } catch {
+      this.pacientesSugeridos = [];
+    } finally {
+      this.syncUi();
+    }
   }
 
   seleccionarSlot(hora: string): void {
@@ -279,6 +344,7 @@ export class CrearCitaComponent implements OnInit {
       hora: '',
     };
     this.pacienteEncontrado = null;
+    this.pacientesSugeridos = [];
     this.mostrarSlots = false;
     this.slotSeleccionado = null;
     this.mensajeDisponibilidad = '';
@@ -295,6 +361,10 @@ export class CrearCitaComponent implements OnInit {
       fecha: false,
       slot: false,
     };
+    if (this.documentoLookupTimer) {
+      clearTimeout(this.documentoLookupTimer);
+      this.documentoLookupTimer = null;
+    }
   }
 
   mostrarNotificacion(tipo: 'success' | 'error', mensaje: string): void {

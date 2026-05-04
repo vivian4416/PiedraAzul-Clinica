@@ -62,6 +62,8 @@ interface BackendPaciente {
   email?: string;
 }
 
+interface BackendPacienteAutocomplete extends BackendPaciente {}
+
 interface BackendSlot {
   hora: string;
   disponible: boolean;
@@ -83,9 +85,20 @@ interface BackendCitasPorFecha {
   medicoNombre: string;
   fecha: string;
   total: number;
+  totalRegistros: number;
+  pagina: number;
+  tamanio: number;
+  totalPaginas: number;
   disponibles: number;
   citas: BackendCitaItem[];
   slots: BackendSlot[];
+}
+
+export interface PaginacionCitas {
+  total: number;
+  pagina: number;
+  tamanio: number;
+  totalPaginas: number;
 }
 
 interface BackendSlotsResponse {
@@ -289,9 +302,14 @@ export class CitasService {
     return nuevaConfiguracion;
   }
 
-  async cargarCitasPorFiltro(medicoId: string, fecha: string): Promise<void> {
+  async cargarCitasPorFiltro(
+    medicoId: string,
+    fecha: string,
+    page = 0,
+    size = 25
+  ): Promise<PaginacionCitas> {
     if (!this.isBrowser) {
-      return;
+      return { total: 0, pagina: 0, tamanio: size, totalPaginas: 0 };
     }
 
     this.currentFecha = fecha;
@@ -303,17 +321,29 @@ export class CitasService {
       }
 
       const ids = this.medicosSubject.value.map(m => m.id);
-      const listados = await Promise.all(ids.map(id => this.fetchCitas(id, fecha)));
+      const listados = await Promise.all(ids.map(id => this.fetchCitas(id, fecha, 0, 200)));
       const merged = listados
+        .map(r => r.citas)
         .flat()
         .sort((a, b) => a.hora.localeCompare(b.hora));
       this.citasSubject.next(merged);
-      return;
+      return {
+        total: merged.length,
+        pagina: 0,
+        tamanio: merged.length,
+        totalPaginas: merged.length > 0 ? 1 : 0,
+      };
     }
 
     this.currentMedicoId = medicoId;
-    const citas = await this.fetchCitas(medicoId, fecha);
-    this.citasSubject.next(citas);
+    const resultado = await this.fetchCitas(medicoId, fecha, page, size);
+    this.citasSubject.next(resultado.citas);
+    return {
+      total: resultado.total,
+      pagina: resultado.pagina,
+      tamanio: resultado.tamanio,
+      totalPaginas: resultado.totalPaginas,
+    };
   }
 
   async cargarSlots(medicoId: string, fecha: string): Promise<void> {
@@ -419,6 +449,30 @@ export class CitasService {
       }
       throw error;
     }
+  }
+
+  async buscarPacientesSugeridos(doc: string): Promise<Paciente[]> {
+    if (!this.isBrowser) {
+      return [];
+    }
+
+    const trimmed = doc.trim();
+    if (!trimmed) {
+      return [];
+    }
+
+    const params = new HttpParams().set('documento', trimmed);
+    const data = await this.getApi<BackendPacienteAutocomplete[]>('/pacientes/sugerencias', params);
+
+    return (data ?? []).map(item => ({
+      doc: item.numDocumento,
+      nombres: item.nombres,
+      apellidos: item.apellidos,
+      cel: item.celular,
+      genero: this.fromBackendGenero(item.genero),
+      fnac: item.fechaNacimiento,
+      email: item.email,
+    }));
   }
 
   async crearCitaManual(payload: {
@@ -561,24 +615,38 @@ export class CitasService {
     return this.configuracionSubject.value;
   }
 
-  private async fetchCitas(medicoId: string, fecha: string): Promise<Cita[]> {
+  private async fetchCitas(medicoId: string, fecha: string, page: number, size: number): Promise<{
+    citas: Cita[];
+    total: number;
+    pagina: number;
+    tamanio: number;
+    totalPaginas: number;
+  }> {
     const params = new HttpParams()
       .set('medicoId', medicoId)
-      .set('fecha', fecha);
+      .set('fecha', fecha)
+      .set('page', page)
+      .set('size', size);
 
     const data = await this.getApi<BackendCitasPorFecha>('/citas', params);
 
-    return (data.citas ?? []).map(c => ({
-      id: c.id,
-      medico: medicoId,
-      hora: c.hora,
-      paciente: c.pacienteNombre,
-      doc: c.pacienteDocumento,
-      cel: c.pacienteCelular,
-      estado: c.estado,
-      origen: c.origen,
-      fecha,
-    }));
+    return {
+      citas: (data.citas ?? []).map(c => ({
+        id: c.id,
+        medico: medicoId,
+        hora: c.hora,
+        paciente: c.pacienteNombre,
+        doc: c.pacienteDocumento,
+        cel: c.pacienteCelular,
+        estado: c.estado,
+        origen: c.origen,
+        fecha,
+      })),
+      total: data.total,
+      pagina: data.pagina,
+      tamanio: data.tamanio,
+      totalPaginas: data.totalPaginas,
+    };
   }
 
   private async getApi<T>(path: string, params?: HttpParams): Promise<T> {
