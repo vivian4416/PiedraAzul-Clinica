@@ -15,8 +15,11 @@ import co.piedrazul.api.core.AppException;
 import co.piedrazul.api.integrations.keycloak.KeycloakAdminClient;
 import co.piedrazul.api.integrations.keycloak.dto.KeycloakRoleRep;
 import co.piedrazul.api.integrations.keycloak.dto.KeycloakUserRep;
+import co.piedrazul.api.modules.auth.RegisterPacienteRequest;
 import co.piedrazul.api.modules.medicos.Medico;
 import co.piedrazul.api.modules.medicos.MedicoRepository;
+import co.piedrazul.api.modules.pacientes.PacienteInput;
+import co.piedrazul.api.modules.pacientes.PacienteService;
 
 @Service
 public class UsuarioService {
@@ -24,10 +27,12 @@ public class UsuarioService {
   private static final Set<String> ROLES_KC_VALIDOS = Set.of("administrador", "agendador", "medico", "paciente");
   private final KeycloakAdminClient keycloak;
   private final MedicoRepository medicoRepository;
+  private final PacienteService pacienteService;
 
-  public UsuarioService(KeycloakAdminClient keycloak, MedicoRepository medicoRepository) {
+  public UsuarioService(KeycloakAdminClient keycloak, MedicoRepository medicoRepository, PacienteService pacienteService) {
     this.keycloak = keycloak;
     this.medicoRepository = medicoRepository;
+    this.pacienteService = pacienteService;
   }
 
   public List<UsuarioResponse> listar() {
@@ -78,6 +83,8 @@ public class UsuarioService {
 
     if ("MEDICO".equals(rol)) {
       sincronizarPerfilMedico(userId, firstName + " " + lastName, enabled);
+    } else if ("PACIENTE".equals(rol)) {
+      sincronizarPerfilPaciente(request, firstName, lastName);
     }
 
     KeycloakUserRep created = keycloak.getUser(userId);
@@ -130,6 +137,9 @@ public class UsuarioService {
       sincronizarPerfilMedico(id, firstName + " " + lastName, enabled);
     } else {
       desactivarPerfilMedicoSiExiste(id);
+      if ("PACIENTE".equals(rol)) {
+        sincronizarPerfilPaciente(request, firstName, lastName);
+      }
     }
 
     KeycloakUserRep updated = keycloak.getUser(id);
@@ -150,6 +160,51 @@ public class UsuarioService {
     }
     KeycloakUserRep user = keycloak.getUser(userId);
     return UsuarioResponse.from(user, primaryAppRole(userId), nombreCompleto(user));
+  }
+
+  public UsuarioResponse registrarPaciente(RegisterPacienteRequest request) {
+    String documento = normalizarTexto(request.documento());
+    if (keycloak.findUserByUsernameExact(documento) != null) {
+      throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "Ya existe un usuario con ese documento");
+    }
+
+    String firstName = normalizarTexto(request.nombres());
+    String lastName = normalizarTexto(request.apellidos());
+    String email = normalizarEmailOptional(request.email());
+    String celular = normalizarTexto(request.celular());
+    String genero = normalizarGenero(request.genero());
+
+    Map<String, Object> attrs = new LinkedHashMap<>();
+    attrs.put("documento", List.of(documento));
+    attrs.put("celular", List.of(celular));
+    attrs.put("genero", List.of(genero));
+
+    KeycloakUserRep userRep = new KeycloakUserRep(
+      null,
+      documento,
+      firstName,
+      lastName,
+      email,
+      true,
+      attrs
+    );
+
+    String userId = keycloak.createUser(userRep);
+    keycloak.resetPassword(userId, normalizarTexto(request.password()), false);
+    asignarRolUnico(userId, "PACIENTE");
+
+    pacienteService.findOrCreate(new PacienteInput(
+      documento,
+      firstName,
+      lastName,
+      celular,
+      genero,
+      request.fechaNacimiento(),
+      email
+    ));
+
+    KeycloakUserRep created = keycloak.getUser(userId);
+    return UsuarioResponse.from(created, "PACIENTE", nombreCompleto(created));
   }
 
   private void sincronizarPerfilMedico(String userId, String nombres, boolean activo) {
@@ -179,6 +234,36 @@ public class UsuarioService {
     });
   }
 
+  private void sincronizarPerfilPaciente(UsuarioCreateRequest request, String firstName, String lastName) {
+    String documento = normalizarTexto(request.documento());
+    String celular = normalizarTexto(request.celular());
+    String genero = normalizarGenero(request.genero());
+    pacienteService.findOrCreate(new PacienteInput(
+      documento,
+      firstName,
+      lastName,
+      celular,
+      genero,
+      request.fechaNacimiento(),
+      request.email()
+    ));
+  }
+
+  private void sincronizarPerfilPaciente(UsuarioUpdateRequest request, String firstName, String lastName) {
+    String documento = normalizarTexto(request.documento());
+    String celular = normalizarTexto(request.celular());
+    String genero = normalizarGenero(request.genero());
+    pacienteService.findOrCreate(new PacienteInput(
+      documento,
+      firstName,
+      lastName,
+      celular,
+      genero,
+      request.fechaNacimiento(),
+      request.email()
+    ));
+  }
+
   private String normalizarTexto(String value) {
     if (value == null || value.isBlank()) {
       throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "El campo es obligatorio");
@@ -200,6 +285,71 @@ public class UsuarioService {
       throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Email invalido");
     }
     return email;
+  }
+
+  private String normalizarEmailOptional(String value) {
+    if (value == null || value.isBlank()) return null;
+    String email = value.trim();
+    if (!email.contains("@")) {
+      throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Email invalido");
+    }
+    return email;
+  }
+
+  private String normalizarGenero(String value) {
+    if (value == null || value.isBlank()) {
+      throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "genero es obligatorio");
+    }
+    String normalized = value.trim().toLowerCase();
+    if ("masculino".equals(normalized) || "hombre".equals(normalized)) return "HOMBRE";
+    if ("femenino".equals(normalized) || "mujer".equals(normalized)) return "MUJER";
+    if ("otro".equals(normalized)) return "OTRO";
+    return normalized.toUpperCase();
+  }
+
+  public void crearUsuarioPacienteSiNoExiste(PacienteInput input, String password) {
+    String documento = normalizarTexto(input.numDocumento());
+    String firstName = normalizarTexto(input.nombres());
+    String lastName = normalizarTexto(input.apellidos());
+    String email = normalizarEmailOptional(input.email());
+    String celular = normalizarTexto(input.celular());
+    String genero = normalizarGenero(input.genero());
+
+    KeycloakUserRep existing = keycloak.findUserByUsernameExact(documento);
+    Map<String, Object> attrs = existing != null && existing.attributes() != null
+      ? new LinkedHashMap<>(existing.attributes())
+      : new LinkedHashMap<>();
+    attrs.put("documento", List.of(documento));
+    attrs.put("celular", List.of(celular));
+    attrs.put("genero", List.of(genero));
+
+    if (existing == null) {
+      if (password == null || password.isBlank()) {
+        throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "password es obligatorio para crear usuario");
+      }
+
+      KeycloakUserRep userRep = new KeycloakUserRep(
+        null,
+        documento,
+        firstName,
+        lastName,
+        email,
+        true,
+        attrs
+      );
+
+      String userId = keycloak.createUser(userRep);
+      keycloak.resetPassword(userId, password.trim(), false);
+      asignarRolUnico(userId, "PACIENTE");
+      return;
+    }
+
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("firstName", firstName);
+    payload.put("lastName", lastName);
+    payload.put("email", email);
+    payload.put("attributes", attrs);
+    keycloak.updateUser(existing.id(), payload);
   }
 
   private String nombreCompleto(KeycloakUserRep user) {
@@ -235,7 +385,8 @@ public class UsuarioService {
   private String toKeycloakRealmRole(String appRole) {
     if (appRole == null) return "";
     return switch (appRole.trim().toUpperCase()) {
-      case "ADMIN", "AGENDADOR" -> "administrador";
+      case "ADMIN" -> "administrador";
+      case "AGENDADOR" -> "agendador";
       case "MEDICO" -> "medico";
       case "PACIENTE" -> "paciente";
       default -> appRole.trim().toLowerCase();
@@ -245,7 +396,8 @@ public class UsuarioService {
   private String toAppRole(String kcRole) {
     if (kcRole == null) return "";
     return switch (kcRole.trim().toLowerCase()) {
-      case "administrador", "agendador" -> "ADMIN";
+      case "administrador" -> "ADMIN";
+      case "agendador" -> "AGENDADOR";
       case "medico" -> "MEDICO";
       case "paciente" -> "PACIENTE";
       default -> kcRole.trim().toUpperCase();

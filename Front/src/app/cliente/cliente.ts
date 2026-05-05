@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Cliente } from './cliente.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-cliente',
@@ -10,6 +12,7 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './cliente.css',
 })
 export class ClienteComponent implements OnInit {
+  private readonly apiBase = 'http://localhost:8090/api/v1';
   clientes: Cliente[] = [];
 
   descripcionActual: string = 'Selecciona una especialidad para ver su descripcion.';
@@ -30,6 +33,7 @@ export class ClienteComponent implements OnInit {
     numeroIdentificacion: '',
     genero: '',
     fechaNacimiento: '',
+    password: '',
     terminos: false
   };
 
@@ -42,6 +46,7 @@ export class ClienteComponent implements OnInit {
     numeroIdentificacion: '',
     genero: '',
     fechaNacimiento: '',
+    password: '',
     terminos: ''
   };
 
@@ -131,6 +136,20 @@ export class ClienteComponent implements OnInit {
     return true;
   }
 
+  validarPassword(): boolean {
+    const value = this.formData.password.trim();
+    if (!value) {
+      this.errores.password = 'La contraseña es obligatoria';
+      return false;
+    }
+    if (value.length < 6) {
+      this.errores.password = 'La contraseña debe tener minimo 6 caracteres';
+      return false;
+    }
+    this.errores.password = '';
+    return true;
+  }
+
   validarTerminos(): boolean {
     if (!this.formData.terminos) {
       this.errores.terminos = 'Debes aceptar los terminos y condiciones';
@@ -140,7 +159,9 @@ export class ClienteComponent implements OnInit {
     return true;
   }
 
-  onSubmit(): void {
+  constructor(private readonly http: HttpClient) {}
+
+  async onSubmit(): Promise<void> {
     const ok =
       this.validarNombre()   &&
       this.validarApellido() &&
@@ -150,12 +171,48 @@ export class ClienteComponent implements OnInit {
       this.validarNumeroIdentificacion() &&
       this.validarGenero() &&
       this.validarFechaNacimiento() &&
+      this.validarPassword() &&
       this.validarTerminos();
 
-    if (ok) {
-      alert('Registro exitoso. Bienvenido a Clinica Piedra Azul.');
-      this.formData = { nombre: '', apellido: '', email: '', telefono: '', tipoDocumento: '', numeroIdentificacion: '', genero: '', fechaNacimiento: '', terminos: false };
-      this.errores  = { nombre: '', apellido: '', email: '', telefono: '', tipoDocumento: '', numeroIdentificacion: '', genero: '', fechaNacimiento: '', terminos: '' };
+    if (!ok) return;
+
+    const payload = {
+      documento: this.formData.numeroIdentificacion.trim(),
+      password: this.formData.password.trim(),
+      nombres: this.formData.nombre.trim(),
+      apellidos: this.formData.apellido.trim(),
+      celular: this.formData.telefono.trim(),
+      genero: this.toBackendGenero(this.formData.genero),
+      fechaNacimiento: this.formData.fechaNacimiento || null,
+      email: this.formData.email.trim(),
+    };
+
+    try {
+      const response = await firstValueFrom(this.http.post<any>(`${this.apiBase}/auth/registro`, payload));
+      const mensaje = response?.message || 'Registro exitoso. Bienvenido a Clinica Piedra Azul.';
+      alert(mensaje);
+      this.formData = { nombre: '', apellido: '', email: '', telefono: '', tipoDocumento: '', numeroIdentificacion: '', genero: '', fechaNacimiento: '', password: '', terminos: false };
+      this.errores  = { nombre: '', apellido: '', email: '', telefono: '', tipoDocumento: '', numeroIdentificacion: '', genero: '', fechaNacimiento: '', password: '', terminos: '' };
+    } catch (error) {
+      const mensaje = this.getMensajeErrorRegistro(error);
+      alert(mensaje);
     }
+  }
+
+  private toBackendGenero(value: string): string {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'masculino') return 'HOMBRE';
+    if (normalized === 'femenino') return 'MUJER';
+    return 'OTRO';
+  }
+
+  private getMensajeErrorRegistro(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const backendMessage = (error.error && error.error.message) ? error.error.message : '';
+      if (backendMessage) return backendMessage;
+      if (error.status === 401) return 'No autenticado. Inicia sesion para registrar.';
+      if (error.status === 403) return 'No tienes permisos para registrar pacientes.';
+    }
+    return 'No fue posible completar el registro. Intenta nuevamente.';
   }
 }

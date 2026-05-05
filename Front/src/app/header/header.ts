@@ -33,6 +33,7 @@ export class Header {
   get esPaciente(): boolean { return this.auth.getAppRol() === 'PACIENTE'; }
   get esMedico(): boolean { return this.auth.getAppRol() === 'MEDICO'; }
   get esAdmin(): boolean { return this.auth.getAppRol() === 'ADMIN'; }
+  get esAgendador(): boolean { return this.auth.getAppRol() === 'AGENDADOR'; }
 
   logout(): void {
     this.auth.logout();

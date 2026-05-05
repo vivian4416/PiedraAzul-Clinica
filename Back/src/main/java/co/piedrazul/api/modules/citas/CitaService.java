@@ -27,6 +27,7 @@ import co.piedrazul.api.modules.pacientes.Paciente;
 import co.piedrazul.api.modules.pacientes.PacienteInput;
 import co.piedrazul.api.modules.pacientes.PacienteRepository;
 import co.piedrazul.api.modules.pacientes.PacienteService;
+import co.piedrazul.api.modules.usuarios.UsuarioService;
 
 @Service
 /** Logica de citas: consulta, validacion de slots y creacion con reglas de negocio. */
@@ -37,6 +38,7 @@ public class CitaService {
   private final MedicoService medicoService;
   private final PacienteService pacienteService;
   private final PacienteRepository pacienteRepository;
+  private final UsuarioService usuarioService;
   private final SlotService slotService;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -45,6 +47,7 @@ public class CitaService {
                      MedicoService medicoService,
                      PacienteService pacienteService,
                      PacienteRepository pacienteRepository,
+                     UsuarioService usuarioService,
                      SlotService slotService,
                      ApplicationEventPublisher eventPublisher) {
     this.citaRepository = citaRepository;
@@ -52,6 +55,7 @@ public class CitaService {
     this.medicoService = medicoService;
     this.pacienteService = pacienteService;
     this.pacienteRepository = pacienteRepository;
+    this.usuarioService = usuarioService;
     this.slotService = slotService;
     this.eventPublisher = eventPublisher;
   }
@@ -235,22 +239,39 @@ public class CitaService {
     if (exigirPacienteRegistrado) {
       Paciente existente = pacienteService.buscarPorDocumento(req.numDocumento().trim());
       if (existente == null) {
-        throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Debes tener un registro de paciente para agendar por la web");
-      }
+        FindOrCreateResult creado = pacienteService.findOrCreate(new PacienteInput(
+          req.numDocumento(), req.nombres(), req.apellidos(), req.celular(), req.genero(), req.fechaNacimiento(), req.email()
+        ));
+        paciente = creado.paciente();
+        pacienteCreado = true;
+      } else {
+        String celularRequest = req.celular() == null ? "" : req.celular().trim();
+        if (!celularRequest.isEmpty() && !existente.getCelular().equals(celularRequest)) {
+          throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "Los datos de paciente no coinciden con el registro");
+        }
 
-      String celularRequest = req.celular() == null ? "" : req.celular().trim();
-      if (!existente.getCelular().equals(celularRequest)) {
-        throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "Los datos de paciente no coinciden con el registro");
+        paciente = existente;
+        pacienteCreado = false;
       }
-
-      paciente = existente;
-      pacienteCreado = false;
     } else {
       FindOrCreateResult creado = pacienteService.findOrCreate(new PacienteInput(
         req.numDocumento(), req.nombres(), req.apellidos(), req.celular(), req.genero(), req.fechaNacimiento(), req.email()
       ));
       paciente = creado.paciente();
       pacienteCreado = creado.esNuevo();
+
+      usuarioService.crearUsuarioPacienteSiNoExiste(
+        new PacienteInput(
+          req.numDocumento(),
+          req.nombres(),
+          req.apellidos(),
+          req.celular(),
+          req.genero(),
+          req.fechaNacimiento(),
+          req.email()
+        ),
+        req.password()
+      );
     }
 
     Cita cita = new Cita();
