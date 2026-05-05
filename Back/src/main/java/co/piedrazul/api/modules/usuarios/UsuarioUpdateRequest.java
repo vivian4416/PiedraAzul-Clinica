@@ -3,6 +3,7 @@ package co.piedrazul.api.modules.usuarios;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 
 public record UsuarioUpdateRequest(
   @NotBlank String login,
@@ -13,5 +14,7 @@ public record UsuarioUpdateRequest(
   @NotBlank String rol,
   @NotNull Boolean activo,
   String documento,
-  String celular
+  String celular,
+  String genero,
+  LocalDate fechaNacimiento
 ) {}

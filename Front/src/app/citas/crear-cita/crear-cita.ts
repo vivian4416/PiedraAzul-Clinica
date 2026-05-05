@@ -34,6 +34,7 @@ export class CrearCitaComponent implements OnInit {
     genero: false,
     fnac: false,
     email: false,
+    password: false,
     medico: false,
     fecha: false,
     slot: false,
@@ -47,6 +48,7 @@ export class CrearCitaComponent implements OnInit {
     fnac: '',
     email: '',
     genero: '',
+    password: '',
   };
 
   formCita = {
@@ -310,6 +312,7 @@ export class CrearCitaComponent implements OnInit {
         genero: this.formPaciente.genero,
         fechaNacimiento: this.formPaciente.fnac,
         email: this.formPaciente.email,
+        password: this.formPaciente.password,
         medicoId: this.formCita.medico,
         fecha: this.formCita.fecha,
         hora: horaSeleccionada,
@@ -337,6 +340,7 @@ export class CrearCitaComponent implements OnInit {
       fnac: '',
       email: '',
       genero: '',
+      password: '',
     };
     this.formCita = {
       medico: '',
@@ -357,6 +361,7 @@ export class CrearCitaComponent implements OnInit {
       genero: false,
       fnac: false,
       email: false,
+      password: false,
       medico: false,
       fecha: false,
       slot: false,
@@ -415,6 +420,7 @@ export class CrearCitaComponent implements OnInit {
     if (campo === 'genero') return this.validarGenero(this.formPaciente.genero);
     if (campo === 'fnac') return this.validarFechaNacimiento(this.formPaciente.fnac);
     if (campo === 'email') return this.validarEmail(this.formPaciente.email);
+    if (campo === 'password') return this.validarPassword(this.formPaciente.password);
     if (campo === 'medico') return this.validarMedico(this.formCita.medico);
     if (campo === 'fecha') return this.validarFechaCita(this.formCita.fecha);
     if (campo === 'slot') return this.validarSlot();
@@ -438,6 +444,7 @@ export class CrearCitaComponent implements OnInit {
       && !this.validarGenero(this.formPaciente.genero)
       && !this.validarFechaNacimiento(this.formPaciente.fnac)
       && !this.validarEmail(this.formPaciente.email)
+      && !this.validarPassword(this.formPaciente.password)
       && !this.validarMedico(this.formCita.medico)
       && !this.validarFechaCita(this.formCita.fecha)
       && !this.validarSlot();
@@ -487,6 +494,14 @@ export class CrearCitaComponent implements OnInit {
     return regex.test(email)
       ? ''
       : 'El correo electrónico no es válido. Ejemplo: nombre@dominio.com';
+  }
+
+  private validarPassword(value: string): string {
+    if (this.pacienteEncontrado) return '';
+    const password = value.trim();
+    if (!password) return 'La contraseña es obligatoria para crear el usuario.';
+    if (password.length < 6) return 'La contraseña debe tener minimo 6 caracteres.';
+    return '';
   }
 
   private validarMedico(value: string): string {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import Keycloak from 'keycloak-js';
 
-export type AppRol = 'ADMIN' | 'MEDICO' | 'PACIENTE' | '';
+export type AppRol = 'ADMIN' | 'AGENDADOR' | 'MEDICO' | 'PACIENTE' | '';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -67,7 +67,8 @@ export class AuthService {
   }
 
   getAppRol(): AppRol {
-    if (this.hasRole('administrador') || this.hasRole('agendador')) return 'ADMIN';
+    if (this.hasRole('administrador')) return 'ADMIN';
+    if (this.hasRole('agendador')) return 'AGENDADOR';
     if (this.hasRole('medico')) return 'MEDICO';
     if (this.hasRole('paciente')) return 'PACIENTE';
     return '';
@@ -93,6 +94,7 @@ export class AuthService {
     const rol = this.getAppRol();
     switch (rol) {
       case 'ADMIN': return 'Administrador';
+      case 'AGENDADOR': return 'Agendador';
       case 'MEDICO': return 'Médico';
       case 'PACIENTE': return 'Paciente';
       default: return '';

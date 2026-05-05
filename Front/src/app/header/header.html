@@ -12,24 +12,26 @@
   <div class="nav-section">
     <div class="nav-label">Agenda</div>
 
-    @if (!esPaciente) {
+    @if (esAgendador || esMedico) {
       <a class="nav-item" routerLink="/citas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
         <i class="bi bi-calendar3"></i>
         <span>Citas</span>
       </a>
     }
 
-    @if (esAdmin) {
+    @if (esAgendador) {
       <a class="nav-item" routerLink="/crear-cita" routerLinkActive="active">
         <i class="bi bi-plus-circle"></i>
         <span>Nueva Cita</span>
       </a>
     }
 
-    <a class="nav-item" routerLink="/agendar-cita" routerLinkActive="active">
-      <i class="bi bi-clock"></i>
-      <span>Agendar</span>
-    </a>
+    @if (esPaciente) {
+      <a class="nav-item" routerLink="/agendar-cita" routerLinkActive="active">
+        <i class="bi bi-clock"></i>
+        <span>Agendar</span>
+      </a>
+    }
   </div>
 
   @if (esAdmin) {

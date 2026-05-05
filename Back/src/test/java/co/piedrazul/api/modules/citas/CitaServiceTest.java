@@ -1,19 +1,21 @@
 package co.piedrazul.api.modules.citas;
 
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
+import org.springframework.context.ApplicationEventPublisher;
 
 import co.piedrazul.api.core.AppException;
 import co.piedrazul.api.modules.medicos.Medico;
 import co.piedrazul.api.modules.medicos.MedicoService;
 import co.piedrazul.api.modules.pacientes.PacienteRepository;
 import co.piedrazul.api.modules.pacientes.PacienteService;
-import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.context.ApplicationEventPublisher;
+import co.piedrazul.api.modules.usuarios.UsuarioService;
 
 class CitaServiceTest {
 
@@ -26,6 +28,7 @@ class CitaServiceTest {
     MedicoService medicoService = Mockito.mock(MedicoService.class);
     PacienteService pacienteService = Mockito.mock(PacienteService.class);
     PacienteRepository pacienteRepository = Mockito.mock(PacienteRepository.class);
+    UsuarioService usuarioService = Mockito.mock(UsuarioService.class);
     SlotService slotService = new SlotService();
     ApplicationEventPublisher eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
 
@@ -35,6 +38,7 @@ class CitaServiceTest {
       medicoService,
       pacienteService,
       pacienteRepository,
+      usuarioService,
       slotService,
       eventPublisher
     );
@@ -49,7 +53,7 @@ class CitaServiceTest {
     when(medicoService.obtenerActivoOFallar(MEDICO_ID)).thenReturn(medico);
     when(medicoService.getDisponibilidadParaFecha(MEDICO_ID, LocalDate.of(2026, 3, 29))).thenReturn(null);
 
-    CrearCitaRequest req = new CrearCitaRequest("1", "A", "B", "300", "HOMBRE", null, null, MEDICO_ID,
+    CrearCitaRequest req = new CrearCitaRequest("1", "A", "B", "300", "HOMBRE", null, null, null, MEDICO_ID,
       LocalDate.of(2026, 3, 29), LocalTime.of(8, 0));
 
     assertThrows(AppException.class, () -> service.crearManual(req, "user-sub-2", "MANUAL"));
