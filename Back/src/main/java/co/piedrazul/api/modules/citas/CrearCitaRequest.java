@@ -14,6 +14,7 @@ public record CrearCitaRequest(
   @NotBlank @Pattern(regexp = "^(HOMBRE|MUJER|OTRO)$", message = "genero invalido") String genero,
   LocalDate fechaNacimiento,
   String email,
+  String password,
   @NotBlank String medicoId,
   @NotNull LocalDate fecha,
   @NotNull LocalTime hora

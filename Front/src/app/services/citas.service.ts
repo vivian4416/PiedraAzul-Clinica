@@ -483,6 +483,7 @@ export class CitasService {
     genero: string;
     fechaNacimiento?: string;
     email?: string;
+    password?: string;
     medicoId: string;
     fecha: string;
     hora: string;
@@ -499,6 +500,7 @@ export class CitasService {
       genero: this.toBackendGenero(payload.genero),
       fechaNacimiento: payload.fechaNacimiento || null,
       email: payload.email || null,
+      password: payload.password?.trim() || null,
       medicoId: payload.medicoId,
       fecha: payload.fecha,
       hora: payload.hora,
@@ -523,6 +525,7 @@ export class CitasService {
     genero: string;
     fechaNacimiento?: string;
     email?: string;
+    password?: string;
     medicoId: string;
     fecha: string;
     hora: string;
@@ -539,6 +542,7 @@ export class CitasService {
       genero: this.toBackendGenero(payload.genero),
       fechaNacimiento: payload.fechaNacimiento || null,
       email: payload.email || null,
+      password: payload.password?.trim() || null,
       medicoId: payload.medicoId,
       fecha: payload.fecha,
       hora: payload.hora,
