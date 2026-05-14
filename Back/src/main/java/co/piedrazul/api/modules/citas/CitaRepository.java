@@ -23,4 +23,11 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
   );
 
   boolean existsByMedicoIdAndFechaHoraAndEstadoNot(String medicoId, LocalDateTime fechaHora, String estado);
+
+boolean existsByMedicoIdAndFechaHoraAndEstadoNotAndIdNot(
+  String medicoId,
+  LocalDateTime fechaHora,
+  String estado,
+  Long id
+);
 }
