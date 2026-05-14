@@ -16,6 +16,29 @@ public class AuditoriaService {
     this.auditoriaRepository = auditoriaRepository;
   }
 
+  public void registrarReagendamiento(
+      Long citaId,
+      String usuarioId,
+      String medicoAnterior,
+      String medicoNuevo,
+      LocalDateTime fechaAnterior,
+      LocalDateTime fechaNueva
+  ) {
+    Auditoria auditoria = new Auditoria();
+    auditoria.setUsuarioId(usuarioId);
+    auditoria.setAccion("REAGENDAR_CITA");
+    auditoria.setEntidad("citas");
+    auditoria.setEntidadId(citaId);
+    auditoria.setDetalle(
+        "{\"medicoAnterior\":\"" + medicoAnterior +
+            "\",\"medicoNuevo\":\"" + medicoNuevo +
+            "\",\"fechaHoraAnterior\":\"" + fechaAnterior +
+            "\",\"fechaHoraNueva\":\"" + fechaNueva + "\"}"
+    );
+    auditoria.setFechaHora(LocalDateTime.now());
+    auditoriaRepository.save(auditoria);
+  }
+
   @EventListener
   public void onCitaCreated(CitaCreadaEvent event) {
     long startedAt = System.currentTimeMillis();
