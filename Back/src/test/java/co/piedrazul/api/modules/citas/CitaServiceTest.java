@@ -7,6 +7,8 @@ import java.time.LocalTime;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -31,7 +33,8 @@ class CitaServiceTest {
     UsuarioService usuarioService = Mockito.mock(UsuarioService.class);
     SlotService slotService = new SlotService();
     ApplicationEventPublisher eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
-
+    AuditoriaService auditoriaService = mock(AuditoriaService.class);
+  
     CitaService service = new CitaService(
       citaRepo,
       configuracionCitasService,
@@ -40,7 +43,8 @@ class CitaServiceTest {
       pacienteRepository,
       usuarioService,
       slotService,
-      eventPublisher
+      eventPublisher,
+      auditoriaService
     );
 
     Medico medico = new Medico();

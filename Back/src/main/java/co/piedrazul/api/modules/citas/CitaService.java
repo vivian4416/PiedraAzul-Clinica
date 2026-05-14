@@ -41,15 +41,18 @@ public class CitaService {
   private final UsuarioService usuarioService;
   private final SlotService slotService;
   private final ApplicationEventPublisher eventPublisher;
+  private final AuditoriaService auditoriaService;
 
-  public CitaService(CitaRepository citaRepository,
-                     ConfiguracionCitasService configuracionCitasService,
-                     MedicoService medicoService,
-                     PacienteService pacienteService,
-                     PacienteRepository pacienteRepository,
-                     UsuarioService usuarioService,
-                     SlotService slotService,
-                     ApplicationEventPublisher eventPublisher) {
+
+public CitaService(CitaRepository citaRepository,
+                   ConfiguracionCitasService configuracionCitasService,
+                   MedicoService medicoService,
+                   PacienteService pacienteService,
+                   PacienteRepository pacienteRepository,
+                   UsuarioService usuarioService,
+                   SlotService slotService,
+                   ApplicationEventPublisher eventPublisher,
+                   AuditoriaService auditoriaService) {
     this.citaRepository = citaRepository;
     this.configuracionCitasService = configuracionCitasService;
     this.medicoService = medicoService;
@@ -58,6 +61,7 @@ public class CitaService {
     this.usuarioService = usuarioService;
     this.slotService = slotService;
     this.eventPublisher = eventPublisher;
+    this.auditoriaService = auditoriaService;
   }
 
   public CitasPorFechaResponse listarPorMedicoYFecha(String medicoId, LocalDate fecha) {
@@ -191,6 +195,82 @@ public class CitaService {
       slots
     );
   }
+
+@Transactional
+public CitaCreadaResponse reagendar(Long citaId, ReagendarCitaRequest req, String responsable) {
+  validarFechaEnVentana(req.fecha());
+
+  Cita cita = citaRepository.findById(citaId)
+      .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Cita no encontrada"));
+
+  if ("CANCELADA".equalsIgnoreCase(cita.getEstado())) {
+    throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "No se puede reagendar una cita cancelada");
+  }
+
+  Medico medico = medicoService.obtenerActivoOFallar(req.medicoId());
+  MedicoDisponibilidad disp = medicoService.getDisponibilidadParaFecha(req.medicoId(), req.fecha());
+
+  if (disp == null) {
+    throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "El medico no atiende en la fecha seleccionada");
+  }
+
+  LocalDateTime fechaHoraNueva = LocalDateTime.of(req.fecha(), req.hora());
+  LocalDateTime start = req.fecha().atStartOfDay();
+  LocalDateTime end = req.fecha().plusDays(1).atStartOfDay();
+
+  List<Cita> citasDia = citaRepository.findByMedicoIdAndFechaHoraBetweenAndEstadoNotOrderByFechaHoraAsc(
+      req.medicoId(),
+      start,
+      end,
+      "CANCELADA"
+  );
+
+  List<LocalTime> ocupados = citasDia.stream()
+      .filter(c -> !c.getId().equals(citaId))
+      .map(c -> c.getFechaHora().toLocalTime())
+      .toList();
+
+  SlotService.ValidationResult valid = slotService.validarSlot(
+      req.hora(),
+      disp.getHoraInicio(),
+      disp.getHoraFin(),
+      medico.getIntervaloMin(),
+      ocupados
+  );
+
+  if (!valid.valido()) {
+    throw new AppException(HttpStatus.CONFLICT, "CONFLICT", valid.razon());
+  }
+
+  boolean tomado = citaRepository.existsByMedicoIdAndFechaHoraAndEstadoNotAndIdNot(
+      req.medicoId(),
+      fechaHoraNueva,
+      "CANCELADA",
+      citaId
+  );
+
+  if (tomado) {
+    throw new AppException(HttpStatus.CONFLICT, "CONFLICT", "El slot fue tomado en este momento, intenta otro");
+  }
+
+  String medicoAnterior = cita.getMedicoId();
+  LocalDateTime fechaAnterior = cita.getFechaHora();
+
+  cita.setMedicoId(req.medicoId());
+  cita.setFechaHora(fechaHoraNueva);
+  cita = citaRepository.save(cita);
+
+  auditoriaService.registrarReagendamiento(
+      cita.getId(),
+      responsable,
+      medicoAnterior,
+      req.medicoId(),
+      fechaAnterior,
+      fechaHoraNueva
+  );
+
+  return new CitaCreadaResponse(cita.getId(), false);
+}
 
   private void validarPaginacion(int page, int size) {
     if (page < 0) {
