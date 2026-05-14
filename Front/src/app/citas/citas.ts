@@ -28,6 +28,17 @@ export class CitasComponent implements OnInit {
   paginaActual = 0;
   totalPaginas = 0;
   totalRegistros = 0;
+  citaSeleccionada: Cita | null = null;
+  mostrandoReagendamiento = false;
+  reagendando = false;
+  errorReagendamiento = '';
+  exitoReagendamiento = '';
+
+  reagendarForm = {
+    medicoId: '',
+    fecha: '',
+    hora: '',
+  };
 
   estadisticas = {
     total: 0,
@@ -170,6 +181,72 @@ export class CitasComponent implements OnInit {
   getTituloTabla(): string {
     const medico = this.medicosOptions.find(m => m.id === this.filtroMedico);
     return `${medico?.nombre ?? 'Todos'} — ${this.formatFecha(this.filtroFecha) || 'Hoy'}`;
+  }
+
+    abrirReagendamiento(cita: Cita): void {
+    this.citaSeleccionada = cita;
+    this.mostrandoReagendamiento = true;
+    this.errorReagendamiento = '';
+    this.exitoReagendamiento = '';
+
+    this.reagendarForm = {
+      medicoId: cita.medico || this.filtroMedico || this.medicosOptions.find(m => m.id)?.id || '',
+      fecha: cita.fecha || this.filtroFecha || new Date().toISOString().slice(0, 10),
+      hora: cita.hora?.slice(0, 5) || '',
+    };
+  }
+
+  cerrarReagendamiento(): void {
+    if (this.reagendando) {
+      return;
+    }
+
+    this.citaSeleccionada = null;
+    this.mostrandoReagendamiento = false;
+    this.errorReagendamiento = '';
+    this.exitoReagendamiento = '';
+    this.reagendarForm = {
+      medicoId: '',
+      fecha: '',
+      hora: '',
+    };
+  }
+
+  async guardarReagendamiento(): Promise<void> {
+    if (!this.citaSeleccionada) {
+      return;
+    }
+
+    if (!this.reagendarForm.medicoId || !this.reagendarForm.fecha || !this.reagendarForm.hora) {
+      this.errorReagendamiento = 'Selecciona médico, fecha y hora para reagendar.';
+      return;
+    }
+
+    this.reagendando = true;
+    this.errorReagendamiento = '';
+    this.exitoReagendamiento = '';
+
+    try {
+      await this.citasService.reagendarCita({
+        citaId: Number(this.citaSeleccionada.id),
+        medicoId: this.reagendarForm.medicoId,
+        fecha: this.reagendarForm.fecha,
+        hora: this.reagendarForm.hora,
+      });
+
+      this.exitoReagendamiento = 'Cita reagendada exitosamente.';
+      this.filtroMedicoPendiente = this.reagendarForm.medicoId;
+      this.filtroFechaPendiente = this.reagendarForm.fecha;
+      await this.aplicarFiltros();
+
+      this.mostrandoReagendamiento = false;
+      this.citaSeleccionada = null;
+    } catch {
+      this.errorReagendamiento = 'No se pudo reagendar la cita. Verifica disponibilidad o conexión con backend.';
+    } finally {
+      this.reagendando = false;
+      this.syncUi();
+    }
   }
 
   getBadgeClass(estado: string): string {

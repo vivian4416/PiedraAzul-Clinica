@@ -8,6 +8,7 @@
                 <div class="stat-meta">citas registradas</div>
             </div>
         </div>
+
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card">
                 <div class="stat-label">Confirmadas</div>
@@ -15,6 +16,7 @@
                 <div class="stat-meta">listas para atencion</div>
             </div>
         </div>
+
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card">
                 <div class="stat-label">Atendidas</div>
@@ -22,6 +24,7 @@
                 <div class="stat-meta">completadas</div>
             </div>
         </div>
+
         <div class="col-12 col-sm-6 col-lg-3">
             <div class="stat-card">
                 <div class="stat-label">Canceladas</div>
@@ -36,6 +39,7 @@
         <div class="card-header pe-3">
             <h5 class="mb-0">Filtrar Citas</h5>
         </div>
+
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-12 col-md-3">
@@ -50,6 +54,7 @@
                         </option>
                     </select>
                 </div>
+
                 <div class="col-12 col-md-3">
                     <label for="filtro-fecha" class="form-label">Fecha</label>
                     <input
@@ -59,13 +64,21 @@
                         [(ngModel)]="filtroFechaPendiente"
                         (ngModelChange)="onFiltroFechaChange($event)">
                 </div>
+
                 <div class="col-12 col-md-6">
                     <div class="form-label d-block" aria-hidden="true"></div>
-                    <button class="btn btn-primary me-2" [disabled]="aplicandoFiltros || cargando" (click)="aplicarFiltros()">
-                        <i class="bi bi-funnel"></i> {{ aplicandoFiltros ? 'Aplicando...' : 'Aplicar filtros' }}
+
+                    <button
+                        class="btn btn-primary me-2"
+                        [disabled]="aplicandoFiltros || cargando"
+                        (click)="aplicarFiltros()">
+                        <i class="bi bi-funnel"></i>
+                        {{ aplicandoFiltros ? 'Aplicando...' : 'Aplicar filtros' }}
                     </button>
+
                     <button class="btn btn-outline-secondary" (click)="exportarCSV()">
-                        <i class="bi bi-download"></i> Exportar CSV
+                        <i class="bi bi-download"></i>
+                        Exportar CSV
                     </button>
                 </div>
             </div>
@@ -77,6 +90,7 @@
         <div class="card-header pe-3">
             <h5 class="mb-0">{{ getTituloTabla() }}</h5>
         </div>
+
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -90,6 +104,7 @@
                         <th>Acciones</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <tr *ngIf="citasFiltradas.length === 0">
                         <td colspan="7" class="text-center py-5">
@@ -100,38 +115,159 @@
                             </div>
                         </td>
                     </tr>
+
                     <tr *ngFor="let cita of citasFiltradas">
-                        <td><strong>{{ cita.hora }}</strong></td>
-                        <td>{{ cita.paciente }}</td>
-                        <td><code>{{ cita.doc }}</code></td>
-                        <td>{{ cita.cel }}</td>
                         <td>
-                            <span *ngIf="cita.origen === 'AUTONOMA'" class="badge bg-info text-dark">Web</span>
-                            <span *ngIf="cita.origen === 'MANUAL'" class="badge bg-secondary">Manual</span>
+                            <strong>{{ cita.hora }}</strong>
                         </td>
+
+                        <td>{{ cita.paciente }}</td>
+
+                        <td>
+                            <code>{{ cita.doc }}</code>
+                        </td>
+
+                        <td>{{ cita.cel }}</td>
+
+                        <td>
+                            <span *ngIf="cita.origen === 'AUTONOMA'" class="badge bg-info text-dark">
+                                Web
+                            </span>
+                            <span *ngIf="cita.origen === 'MANUAL'" class="badge bg-secondary">
+                                Manual
+                            </span>
+                        </td>
+
                         <td>
                             <span class="badge" [ngClass]="getBadgeClass(cita.estado)">
                                 {{ cita.estado | titlecase }}
                             </span>
                         </td>
+
                         <td>
-                            <button class="btn btn-sm btn-outline-primary">Ver</button>
+                            <div class="btn-group" role="group" aria-label="Acciones de cita">
+                                <button class="btn btn-sm btn-outline-primary">
+                                    Ver
+                                </button>
+
+                                <button
+                                    class="btn btn-sm btn-outline-success"
+                                    [disabled]="cita.estado === 'CANCELADA'"
+                                    (click)="abrirReagendamiento(cita)">
+                                    Reagendar
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
         <div class="card-footer d-flex align-items-center justify-content-between">
             <small class="text-muted">
                 Pagina {{ totalPaginas === 0 ? 0 : (paginaActual + 1) }} de {{ totalPaginas }}
                 · Mostrando {{ citasFiltradas.length }} de {{ totalRegistros }}
             </small>
+
             <div class="btn-group" role="group" aria-label="Paginacion de citas">
-                <button class="btn btn-sm btn-outline-secondary" [disabled]="aplicandoFiltros || paginaActual === 0" (click)="paginaAnterior()">
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    [disabled]="aplicandoFiltros || paginaActual === 0"
+                    (click)="paginaAnterior()">
                     Anterior
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" [disabled]="aplicandoFiltros || (paginaActual + 1 >= totalPaginas)" (click)="paginaSiguiente()">
+
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    [disabled]="aplicandoFiltros || (paginaActual + 1 >= totalPaginas)"
+                    (click)="paginaSiguiente()">
                     Siguiente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REAGENDAMIENTO -->
+    <div *ngIf="mostrandoReagendamiento" class="modal-backdrop-custom">
+        <div class="modal-card">
+            <div class="modal-header-custom">
+                <h5 class="mb-0">Reagendar cita</h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    aria-label="Cerrar"
+                    (click)="cerrarReagendamiento()">
+                </button>
+            </div>
+
+            <div class="modal-body-custom">
+                <div *ngIf="citaSeleccionada" class="alert alert-light border mb-3">
+                    <strong>Paciente:</strong> {{ citaSeleccionada.paciente }}<br>
+                    <strong>Documento:</strong> {{ citaSeleccionada.doc }}<br>
+                    <strong>Hora actual:</strong> {{ citaSeleccionada.hora }}
+                </div>
+
+                <div *ngIf="errorReagendamiento" class="alert alert-danger">
+                    {{ errorReagendamiento }}
+                </div>
+
+                <div *ngIf="exitoReagendamiento" class="alert alert-success">
+                    {{ exitoReagendamiento }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="reagendar-medico" class="form-label">Nuevo médico/terapista</label>
+                    <select
+                        id="reagendar-medico"
+                        class="form-control"
+                        [(ngModel)]="reagendarForm.medicoId">
+                        <option value="">Seleccione un médico</option>
+                        <option
+                            *ngFor="let medico of medicosOptions"
+                            [ngValue]="medico.id"
+                            [disabled]="!medico.id">
+                            {{ medico.nombre }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="reagendar-fecha" class="form-label">Nueva fecha</label>
+                    <input
+                        type="date"
+                        id="reagendar-fecha"
+                        class="form-control"
+                        [(ngModel)]="reagendarForm.fecha">
+                </div>
+
+                <div class="mb-3">
+                    <label for="reagendar-hora" class="form-label">Nueva hora</label>
+                    <input
+                        type="time"
+                        id="reagendar-hora"
+                        class="form-control"
+                        [(ngModel)]="reagendarForm.hora">
+
+                    <small class="text-muted">
+                        Usa una hora dentro de la disponibilidad configurada para el médico.
+                    </small>
+                </div>
+            </div>
+
+            <div class="modal-footer-custom">
+                <button
+                    class="btn btn-outline-secondary"
+                    [disabled]="reagendando"
+                    (click)="cerrarReagendamiento()">
+                    Cancelar
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    [disabled]="reagendando"
+                    (click)="guardarReagendamiento()">
+                    {{ reagendando ? 'Guardando...' : 'Guardar re-agendamiento' }}
                 </button>
             </div>
         </div>
