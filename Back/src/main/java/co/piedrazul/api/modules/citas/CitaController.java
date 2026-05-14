@@ -11,7 +11,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,7 +24,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/citas")
-/** Endpoints de citas: listado, slots disponibles y creacion manual/autonoma. */
+/** Endpoints de citas: listado, slots disponibles, creacion manual/autonoma y re-agendamiento. */
 public class CitaController {
   private static final Logger log = LoggerFactory.getLogger(CitaController.class);
   private final CitaService citaService;
@@ -34,10 +36,10 @@ public class CitaController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR','MEDICO')")
   public Map<String, Object> listar(
-    @RequestParam String medicoId,
-    @RequestParam LocalDate fecha,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "25") int size
+      @RequestParam String medicoId,
+      @RequestParam LocalDate fecha,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "25") int size
   ) {
     CitasPorFechaResponse data = citaService.listarPorMedicoYFechaPaginado(medicoId, fecha, page, size);
     return Map.of("ok", true, "data", data);
@@ -48,12 +50,12 @@ public class CitaController {
   public Map<String, Object> slots(@RequestParam String medicoId, @RequestParam LocalDate fecha) {
     CitasPorFechaResponse data = citaService.listarPorMedicoYFecha(medicoId, fecha);
     return Map.of(
-      "ok", true,
-      "data", Map.of(
-        "slots", data.slots(),
-        "disponibles", data.disponibles(),
-        "ocupados", data.total()
-      )
+        "ok", true,
+        "data", Map.of(
+            "slots", data.slots(),
+            "disponibles", data.disponibles(),
+            "ocupados", data.total()
+        )
     );
   }
 
@@ -65,13 +67,25 @@ public class CitaController {
     return Map.of("ok", true, "message", "Cita creada exitosamente", "data", data);
   }
 
+  @PutMapping("/{id}/reagendar")
+  @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR','MEDICO','administrador','agendador','medico')")
+  public Map<String, Object> reagendar(
+      @PathVariable Long id,
+      @Valid @RequestBody ReagendarCitaRequest request,
+      Authentication authentication
+  ) {
+    String responsable = keycloakUserId(authentication);
+    CitaCreadaResponse data = citaService.reagendar(id, request, responsable);
+    return Map.of("ok", true, "message", "Cita reagendada exitosamente", "data", data);
+  }
+
   @PostMapping("/autonoma")
   @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR','PACIENTE')")
   public Map<String, Object> crearAutonoma(@Valid @RequestBody CrearCitaRequest request, Authentication authentication) {
     long startedAt = System.currentTimeMillis();
     String creadoPor = keycloakUserId(authentication);
     log.info("[RF3] iniciar crearAutonoma sub={} medicoId={} fecha={} hora={}",
-      creadoPor, request.medicoId(), request.fecha(), request.hora());
+        creadoPor, request.medicoId(), request.fecha(), request.hora());
 
     CitaCreadaResponse data = citaService.crearAutonoma(request, creadoPor);
 
