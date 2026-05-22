@@ -516,7 +516,33 @@ export class CitasService {
       }
     })();
   }
+   
 
+    async reagendarCita(payload: {
+  citaId: number;
+  medicoId: string;
+  fecha: string;
+  hora: string;
+}): Promise<void> {
+  if (!this.isBrowser) {
+    return;
+  }
+
+  await this.putApi(`/citas/${payload.citaId}/reagendar`, {
+    medicoId: payload.medicoId,
+    fecha: payload.fecha,
+    hora: payload.hora,
+  });
+
+  void (async () => {
+    try {
+      await this.cargarCitasPorFiltro(payload.medicoId, payload.fecha);
+      await this.cargarSlots(payload.medicoId, payload.fecha);
+    } catch {
+      // Si falla la recarga post-reagendamiento, no invalida el cambio realizado.
+    }
+  })();
+}
   async crearCitaAutonoma(payload: {
     numDocumento: string;
     nombres: string;
