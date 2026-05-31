@@ -30,10 +30,10 @@ export class Header {
     return 'U';
   }
 
-  get esPaciente(): boolean { return this.auth.getAppRol() === 'PACIENTE'; }
-  get esMedico(): boolean { return this.auth.getAppRol() === 'MEDICO'; }
-  get esAdmin(): boolean { return this.auth.getAppRol() === 'ADMIN'; }
-  get esAgendador(): boolean { return this.auth.getAppRol() === 'AGENDADOR'; }
+  get esPaciente(): boolean { return this.auth.isPaciente(); }
+  get esMedico(): boolean { return this.auth.isMedico(); }
+  get esAdmin(): boolean { return this.auth.isAdmin(); }
+  get esAgendador(): boolean { return this.auth.isAgendador(); }
 
   logout(): void {
     this.auth.logout();

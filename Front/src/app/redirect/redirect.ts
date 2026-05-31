@@ -16,6 +16,10 @@ export class RedirectComponent implements OnInit {
       void this.auth.login(`${window.location.origin}/`);
       return;
     }
+    if (this.auth.isAdmin()) {
+      void this.router.navigate(['/configuracion'], { replaceUrl: true });
+      return;
+    }
     const rol = this.auth.getAppRol();
     if (rol === 'PACIENTE') {
       void this.router.navigate(['/agendar-cita'], { replaceUrl: true });

@@ -59,18 +59,45 @@ export class AuthService {
     return !!(this.keycloak && this.keycloak.authenticated);
   }
 
-  hasRole(role: string): boolean {
-    if (!this.keycloak || !this.keycloak.tokenParsed) return false;
+  private getRealmRoles(): string[] {
+    if (!this.keycloak || !this.keycloak.tokenParsed) return [];
     const parsed: any = this.keycloak.tokenParsed;
-    const realmRoles: string[] = parsed?.realm_access?.roles ?? [];
-    return realmRoles.includes(role);
+    return parsed?.realm_access?.roles ?? [];
+  }
+
+  hasRole(role: string): boolean {
+    const target = role.trim().toLowerCase();
+    return this.getRealmRoles().some(r => r.toLowerCase() === target);
+  }
+
+  hasAnyRole(roles: string[]): boolean {
+    if (roles.length === 0) return false;
+    const targets = roles.map(r => r.trim().toLowerCase());
+    const current = this.getRealmRoles().map(r => r.toLowerCase());
+    return targets.some(t => current.includes(t));
+  }
+
+  isAdmin(): boolean {
+    return this.hasAnyRole(['administrador', 'admin']);
+  }
+
+  isAgendador(): boolean {
+    return this.hasRole('agendador');
+  }
+
+  isMedico(): boolean {
+    return this.hasRole('medico');
+  }
+
+  isPaciente(): boolean {
+    return this.hasRole('paciente');
   }
 
   getAppRol(): AppRol {
-    if (this.hasRole('administrador')) return 'ADMIN';
-    if (this.hasRole('agendador')) return 'AGENDADOR';
-    if (this.hasRole('medico')) return 'MEDICO';
-    if (this.hasRole('paciente')) return 'PACIENTE';
+    if (this.isAdmin()) return 'ADMIN';
+    if (this.isAgendador()) return 'AGENDADOR';
+    if (this.isMedico()) return 'MEDICO';
+    if (this.isPaciente()) return 'PACIENTE';
     return '';
   }
 

@@ -1,6 +1,6 @@
 -- Medicos vinculados a usuarios Keycloak con rol MEDICO
 INSERT INTO medicos (id, nombres, tipo, especialidad, intervalo_min, activo) VALUES
-  ('795ee435-a5d2-4817-87b0-11632b46ff4c', 'javier gomez', 'MEDICO', 'GENERAL', 30, TRUE),
+  ('795ee435-a5d2-4817-87b0-11632b46ff4c', 'Maria Gomez', 'MEDICO', 'GENERAL', 30, TRUE),
   ('bc119041-1689-4247-8f21-352b1e7068d3', 'Javier Gomez', 'MEDICO', 'GENERAL', 30, TRUE);
 
 INSERT INTO medico_disponibilidad (medico_id, dia_semana, hora_inicio, hora_fin) VALUES

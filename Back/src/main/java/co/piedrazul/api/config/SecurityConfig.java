@@ -54,6 +54,7 @@ public class SecurityConfig {
       .csrf(csrf -> csrf.disable())
       .httpBasic(AbstractHttpConfigurer::disable)
       .formLogin(AbstractHttpConfigurer::disable)
+      .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
       .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .exceptionHandling(ex -> ex
         .authenticationEntryPoint(authenticationEntryPoint())
@@ -66,6 +67,7 @@ public class SecurityConfig {
       )
       .authorizeHttpRequests(auth -> auth
         .requestMatchers("/health").permitAll()
+        .requestMatchers("/h2-console/**").permitAll()
         .requestMatchers("/api/v1/auth/registro").permitAll()
         .anyRequest().authenticated()
       );
