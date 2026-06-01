@@ -8,7 +8,8 @@ import { RedirectComponent } from './redirect/redirect';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: RedirectComponent, pathMatch: 'full' },
+  { path: '', component: ClienteComponent, pathMatch: 'full' },
+  { path: 'ingresar', component: RedirectComponent },
   { path: 'clientes', component: ClienteComponent, canActivate: [authGuard] },
   { path: 'citas', component: CitasComponent, canActivate: [authGuard] },
   { path: 'crear-cita', component: CrearCitaComponent, canActivate: [authGuard] },

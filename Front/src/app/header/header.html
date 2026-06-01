@@ -6,10 +6,16 @@
       <div class="logo-sub">{{ subtitulo }}</div>
     </div>
   </div>
+
+  @if (!estaAutenticado) {
+    <button type="button" class="btn btn-outline-light btn-sm mt-3" (click)="login()">
+      Ya soy usuario
+    </button>
+  }
 </section>
 
 <nav class="sidebar-nav">
-  @if (!esAdmin) {
+  @if (estaAutenticado && !esAdmin) {
     <div class="nav-section">
       <div class="nav-label">Agenda</div>
 
@@ -36,30 +42,28 @@
     </div>
   }
 
-  @if (esAdmin) {
+  @if (estaAutenticado && esAdmin) {
     <div class="nav-section">
       <div class="nav-label">Sistema</div>
       <a class="nav-item" routerLink="/configuracion" routerLinkActive="active">
         <i class="bi bi-sliders"></i>
         <span>Configuración</span>
       </a>
-      <a class="nav-item" routerLink="/clientes" routerLinkActive="active">
-        <i class="bi bi-people"></i>
-        <span>Clientes</span>
-      </a>
     </div>
   }
 </nav>
 
-<section class="sidebar-footer">
-  <div class="user-chip">
-    <div class="avatar">{{ initiales }}</div>
-    <div class="user-info">
-      <div class="user-name">{{ nombreUsuario }}</div>
-      <div class="user-role">{{ rolLabel }}</div>
+@if (estaAutenticado) {
+  <section class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">{{ initiales }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ nombreUsuario }}</div>
+        <div class="user-role">{{ rolLabel }}</div>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()" title="Cerrar sesión">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
     </div>
-    <button type="button" class="btn-logout" (click)="logout()" title="Cerrar sesión">
-      <i class="bi bi-box-arrow-right"></i>
-    </button>
-  </div>
-</section>
+  </section>
+}

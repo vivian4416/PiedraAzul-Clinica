@@ -13,7 +13,7 @@ export class RedirectComponent implements OnInit {
   ngOnInit(): void {
     
     if (!this.auth.isLoggedIn()) {
-      void this.auth.login(`${window.location.origin}/`);
+      void this.auth.login(`${window.location.origin}/ingresar`);
       return;
     }
     if (this.auth.isAdmin()) {

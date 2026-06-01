@@ -34,8 +34,13 @@ export class Header {
   get esMedico(): boolean { return this.auth.isMedico(); }
   get esAdmin(): boolean { return this.auth.isAdmin(); }
   get esAgendador(): boolean { return this.auth.isAgendador(); }
+  get estaAutenticado(): boolean { return this.auth.isLoggedIn(); }
 
   logout(): void {
     this.auth.logout();
+  }
+
+  login(): void {
+    void this.auth.login(`${window.location.origin}/ingresar`);
   }
 }
