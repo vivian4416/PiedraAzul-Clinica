@@ -39,9 +39,11 @@ public class CitaController {
       @RequestParam String medicoId,
       @RequestParam LocalDate fecha,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "25") int size
+      @RequestParam(defaultValue = "25") int size,
+      Authentication authentication
   ) {
-    CitasPorFechaResponse data = citaService.listarPorMedicoYFechaPaginado(medicoId, fecha, page, size);
+    String resolvedMedicoId = resolverMedicoId(authentication, medicoId);
+    CitasPorFechaResponse data = citaService.listarPorMedicoYFechaPaginado(resolvedMedicoId, fecha, page, size);
     return Map.of("ok", true, "data", data);
   }
 
@@ -115,5 +117,37 @@ public class CitaController {
       throw new AppException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Usuario no autenticado");
     }
     return name;
+  }
+
+  private String resolverMedicoId(Authentication authentication, String medicoId) {
+    if (esMedico(authentication)) {
+      String userId = keycloakUserId(authentication);
+      if (userId == null || userId.isBlank()) {
+        throw new AppException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Usuario no autenticado");
+      }
+      if (medicoId == null || medicoId.isBlank()) {
+        return userId;
+      }
+      if (!userId.equals(medicoId)) {
+        throw new AppException(HttpStatus.FORBIDDEN, "FORBIDDEN", "No puedes consultar citas de otros medicos");
+      }
+      return medicoId;
+    }
+
+    if (medicoId == null || medicoId.isBlank()) {
+      throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "medicoId es obligatorio");
+    }
+    return medicoId;
+  }
+
+  private boolean esMedico(Authentication authentication) {
+    if (authentication == null || authentication.getAuthorities() == null) {
+      return false;
+    }
+    return authentication.getAuthorities().stream()
+      .anyMatch(a -> {
+        String authority = a.getAuthority();
+        return "ROLE_MEDICO".equalsIgnoreCase(authority);
+      });
   }
 }

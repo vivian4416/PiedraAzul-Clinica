@@ -1,0 +1,6 @@
+projectKey=piedrazul-back
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=piedrazul-back
+ceTaskId=de18e648-6944-4194-a3c4-6eb3a17125ea
+ceTaskUrl=http://localhost:9000/api/ce/task?id=de18e648-6944-4194-a3c4-6eb3a17125ea

@@ -17,6 +17,7 @@ export class CitasComponent implements OnInit {
   citasFiltradas: Cita[] = [];
 
   medicosOptions: Array<{ id: string; nombre: string }> = [{ id: '', nombre: 'Todos' }];
+  soloMedico = false;
 
   filtroMedico: string = '';
   filtroFecha: string = new Date().toISOString().slice(0, 10);
@@ -64,16 +65,26 @@ export class CitasComponent implements OnInit {
     this.errorCarga = '';
     try {
       await this.citasService.inicializar();
-      this.medicosOptions = [
-        { id: '', nombre: 'Todos' },
-        ...this.citasService.getMedicos().map(m => ({
-          id: m.id,
-          nombre: `${m.nombre} ${m.apellido}`.trim(),
-        })),
-      ];
+      const perfil = await this.citasService.obtenerMiPerfil();
+      const medicos = this.citasService.getMedicos();
+      const perfilNombre = `${perfil.nombreCompleto} ${perfil.apellido}`.trim();
 
-      const primerMedico = this.citasService.getMedicos()[0];
-      this.filtroMedico = primerMedico ? primerMedico.id : '';
+      if (perfil.rol === 'MEDICO') {
+        this.soloMedico = true;
+        this.medicosOptions = [{ id: perfil.id, nombre: perfilNombre || 'Medico' }];
+        this.filtroMedico = perfil.id;
+      } else {
+        this.medicosOptions = [
+          { id: '', nombre: 'Todos' },
+          ...medicos.map(m => ({
+            id: m.id,
+            nombre: `${m.nombre} ${m.apellido}`.trim(),
+          })),
+        ];
+        const primerMedico = medicos[0];
+        this.filtroMedico = primerMedico ? primerMedico.id : '';
+      }
+
       this.filtroMedicoPendiente = this.filtroMedico;
       this.filtroFechaPendiente = this.filtroFecha;
       await this.aplicarFiltros();

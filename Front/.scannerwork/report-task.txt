@@ -1,0 +1,6 @@
+projectKey=piedrazul-front
+serverUrl=http://localhost:9000
+serverVersion=26.3.0.120487
+dashboardUrl=http://localhost:9000/dashboard?id=piedrazul-front
+ceTaskId=5a31ae6e-2ff1-4111-9d1e-21a9f10fce8b
+ceTaskUrl=http://localhost:9000/api/ce/task?id=5a31ae6e-2ff1-4111-9d1e-21a9f10fce8b

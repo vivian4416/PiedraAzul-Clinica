@@ -25,9 +25,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.css"
-            ],
+            "styles": ["src/styles.css"],
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
@@ -74,8 +72,24 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
-        }
+  "builder": "@angular-devkit/build-angular:karma",
+  "options": {
+    "main": "src/test.ts",
+        "tsConfig": "tsconfig.spec.json",
+    "karmaConfig": "karma.conf.js",
+    "polyfills": ["zone.js", "zone.js/testing"],
+    "include": ["src/**/*.spec.ts"]
+  },
+  "configurations": {
+    "development": {
+      "browsers": "ChromeHeadless"
+    },
+    "production": {
+      "browsers": "ChromeHeadless"
+    }
+  },
+  "defaultConfiguration": "development"
+}
       }
     }
   }

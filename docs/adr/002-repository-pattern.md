@@ -4,7 +4,6 @@
 **Estado:** Desarrollado
 
 ---
-
 ## **Contexto**
 
 El sistema Piedrazul requiere gestionar información crítica relacionada con citas médicas, pacientes, médicos, disponibilidad y auditoría. Estas operaciones implican acceso constante a la base de datos y ejecución de consultas que forman parte del flujo central del negocio, como la validación de disponibilidad de horarios y el registro de auditoría.

@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -23,6 +25,7 @@ import co.piedrazul.api.modules.pacientes.PacienteService;
 
 @Service
 public class UsuarioService {
+  private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
   private static final List<String> ROLES_VALIDOS = List.of("ADMIN", "AGENDADOR", "MEDICO", "PACIENTE");
   private static final Set<String> ROLES_KC_VALIDOS = Set.of("administrador", "agendador", "medico", "paciente");
   private final KeycloakAdminClient keycloak;
@@ -207,6 +210,30 @@ public class UsuarioService {
     return UsuarioResponse.from(created, "PACIENTE", nombreCompleto(created));
   }
 
+  public void sincronizarUsuariosKeycloak() {
+    List<KeycloakUserRep> users = keycloak.listUsers(2000);
+    int medicos = 0;
+    int pacientes = 0;
+
+    for (KeycloakUserRep user : users) {
+      if (user == null || user.id() == null) {
+        continue;
+      }
+      String rol = primaryAppRole(user.id());
+      boolean enabled = user.enabled() == null || user.enabled();
+
+      if ("MEDICO".equals(rol)) {
+        sincronizarPerfilMedico(user.id(), nombreCompleto(user), enabled);
+        medicos++;
+      } else if ("PACIENTE".equals(rol)) {
+        sincronizarPerfilPacienteDesdeKeycloak(user);
+        pacientes++;
+      }
+    }
+
+    log.info("[SYNC-KC] Usuarios procesados: {} (medicos={}, pacientes={})", users.size(), medicos, pacientes);
+  }
+
   private void sincronizarPerfilMedico(String userId, String nombres, boolean activo) {
     medicoRepository.findById(userId).ifPresentOrElse(
       medico -> {
@@ -264,6 +291,32 @@ public class UsuarioService {
     ));
   }
 
+  private void sincronizarPerfilPacienteDesdeKeycloak(KeycloakUserRep user) {
+    Map<String, Object> attrs = user.attributes() == null ? Map.of() : user.attributes();
+    String documento = normalizarDocumentoFallback(extraerAttr(attrs, "documento"), user.username());
+    String celular = normalizarCelularFallback(extraerAttr(attrs, "celular"));
+    String generoAttr = extraerAttr(attrs, "genero");
+    String genero = normalizarGenero(generoAttr == null || generoAttr.isBlank() ? "OTRO" : generoAttr);
+
+    String nombres = normalizarTextoFallback(user.firstName(), user.username(), "Sin Nombre");
+    String apellidos = normalizarTextoFallback(user.lastName(), "N/A");
+
+    if (documento.isBlank()) {
+      log.warn("[SYNC-KC] Paciente sin documento/username, se omite. userId={}", user.id());
+      return;
+    }
+
+    pacienteService.findOrCreate(new PacienteInput(
+      documento,
+      nombres,
+      apellidos,
+      celular,
+      genero,
+      null,
+      user.email()
+    ));
+  }
+
   private String normalizarTexto(String value) {
     if (value == null || value.isBlank()) {
       throw new AppException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "El campo es obligatorio");
@@ -305,6 +358,41 @@ public class UsuarioService {
     if ("femenino".equals(normalized) || "mujer".equals(normalized)) return "MUJER";
     if ("otro".equals(normalized)) return "OTRO";
     return normalized.toUpperCase();
+  }
+
+  private String extraerAttr(Map<String, Object> attrs, String key) {
+    if (attrs == null) return null;
+    Object val = attrs.get(key);
+    if (val instanceof List<?> list && !list.isEmpty()) {
+      return String.valueOf(list.get(0));
+    }
+    if (val instanceof String s) return s;
+    return null;
+  }
+
+  private String normalizarDocumentoFallback(String documento, String fallback) {
+    String normalized = documento == null ? "" : documento.trim();
+    if (!normalized.isBlank()) return normalized;
+    return fallback == null ? "" : fallback.trim();
+  }
+
+  private String normalizarCelularFallback(String celular) {
+    String normalized = celular == null ? "" : celular.trim();
+    return normalized.isBlank() ? "0000000000" : normalized;
+  }
+
+  private String normalizarTextoFallback(String value, String... fallbacks) {
+    if (value != null && !value.isBlank()) {
+      return value.trim();
+    }
+    if (fallbacks != null) {
+      for (String fb : fallbacks) {
+        if (fb != null && !fb.isBlank()) {
+          return fb.trim();
+        }
+      }
+    }
+    return "";
   }
 
   public void crearUsuarioPacienteSiNoExiste(PacienteInput input, String password) {

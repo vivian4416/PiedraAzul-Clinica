@@ -47,6 +47,7 @@
                     <select
                         id="filtro-medico"
                         class="form-control"
+                        [disabled]="soloMedico"
                         [(ngModel)]="filtroMedicoPendiente"
                         (ngModelChange)="onFiltroMedicoChange($event)">
                         <option *ngFor="let medico of medicosOptions" [ngValue]="medico.id">
