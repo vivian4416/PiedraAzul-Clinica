@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import co.piedrazul.api.core.AppException;
 import jakarta.validation.Valid;
@@ -63,6 +64,7 @@ public class CitaController {
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','AGENDADOR')")
+  @ResponseStatus(HttpStatus.CREATED)
   public Map<String, Object> crear(@Valid @RequestBody CrearCitaRequest request, Authentication authentication) {
     String creadoPor = keycloakUserId(authentication);
     CitaCreadaResponse data = citaService.crearManual(request, creadoPor, "MANUAL");
