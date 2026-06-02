@@ -17,14 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,30 +29,14 @@ import co.piedrazul.api.modules.citas.CrearCitaRequest;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers(disabledWithoutDocker = true)
+@TestPropertySource(properties = {
+  "spring.datasource.url=jdbc:h2:mem:piedrazul_e2e;MODE=MySQL;DB_CLOSE_DELAY=0;DB_CLOSE_ON_EXIT=FALSE",
+  "spring.sql.init.mode=always"
+})
 @Transactional
 class AgendamientoE2ETest {
   private static final String MEDICO_ID = "795ee435-a5d2-4817-87b0-11632b46ff4c";
   private static final String DOCUMENTO = "91000001";
-  private static final int H2_TCP_PORT = 1521;
-
-  @Container
-  static final GenericContainer<?> H2 = new GenericContainer<>("oscarfonts/h2:2.2.224")
-    .withExposedPorts(H2_TCP_PORT);
-
-  @DynamicPropertySource
-  static void registerProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", () -> String.format(
-      "jdbc:h2:tcp://%s:%d/mem:piedrazul;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-      H2.getHost(),
-      H2.getMappedPort(H2_TCP_PORT)
-    ));
-    registry.add("spring.datasource.username", () -> "sa");
-    registry.add("spring.datasource.password", () -> "");
-    registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
-    registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
-    registry.add("spring.sql.init.mode", () -> "always");
-  }
 
   @Autowired
   private MockMvc mockMvc;
