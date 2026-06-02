@@ -1,20 +1,57 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="login-screen" [fullscreen]="true">
+  <div class="login-bg"></div>
+  <div class="login-glow login-glow-a"></div>
+  <div class="login-glow login-glow-b"></div>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <main class="login-layout">
+    <section class="brand-panel">
+      <p class="eyebrow">PiedraAzul Clínica</p>
+      <h1>Agenda médica móvil con Keycloak y PKCE.</h1>
+      <p class="lead">
+        Ingresa con el navegador del sistema, conserva tu sesión y consulta las citas con los mismos filtros que en la web.
+      </p>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+      <div class="feature-row">
+        <span>Login web PKCE</span>
+        <span>Token guardado</span>
+        <span>API /api/v1/citas</span>
+      </div>
+    </section>
+
+    <ion-card class="login-card">
+      <ion-card-header>
+        <ion-card-subtitle>Acceso móvil</ion-card-subtitle>
+        <ion-card-title>{{ loggedIn ? 'Sesión activa' : 'Iniciar sesión' }}</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <p class="card-copy" *ngIf="!loggedIn">
+          Usa el mismo realm que en la web. El flujo abre Keycloak con PKCE y luego vuelve a la aplicación.
+        </p>
+
+        <div class="session-box" *ngIf="loggedIn; else loginActions">
+          <p class="session-label">Conectado como</p>
+          <h2>{{ displayName || 'Usuario autenticado' }}</h2>
+          <p class="session-role">{{ roleLabel }}</p>
+
+          <div class="actions-row">
+            <ion-button expand="block" color="dark" (click)="goToCitas()">Ir a citas</ion-button>
+            <ion-button expand="block" fill="outline" color="medium" (click)="logout()">Cerrar sesión</ion-button>
+          </div>
+        </div>
+
+        <ng-template #loginActions>
+          <div class="actions-row">
+            <ion-button expand="block" color="primary" [disabled]="loading" (click)="login()">
+              {{ loading ? 'Abriendo Keycloak...' : 'Entrar con Keycloak' }}
+            </ion-button>
+          </div>
+        </ng-template>
+
+        <ion-text color="danger" *ngIf="errorMessage">
+          <p class="error-text">{{ errorMessage }}</p>
+        </ion-text>
+      </ion-card-content>
+    </ion-card>
+  </main>
 </ion-content>

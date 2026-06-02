@@ -1,0 +1,157 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Citas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="citas-screen" [fullscreen]="true">
+  <div class="top-shell">
+    <section class="hero">
+      <p class="eyebrow">Sistema de citas</p>
+      <h1>Consulta y filtra la agenda desde el móvil.</h1>
+      <p class="hero-copy">
+        Médico, fecha, paginación, estado y origen. Lo mismo que en la web, pero optimizado para pantalla pequeña.
+      </p>
+
+      <div class="hero-meta" *ngIf="usuario">
+        <span>{{ usuario.nombreCompleto }}</span>
+        <span>{{ usuario.rol }}</span>
+      </div>
+    </section>
+
+    <ion-card class="filter-card">
+      <ion-card-header>
+        <ion-card-subtitle>Filtros</ion-card-subtitle>
+        <ion-card-title>Buscar citas</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <div class="filters-grid">
+          <ion-item lines="full">
+            <ion-label position="stacked">Médico</ion-label>
+            <ion-select [(ngModel)]="filtros.medicoId" interface="popover">
+              <ion-select-option *ngFor="let medico of medicos" [value]="medico.id">
+                {{ medico.nombre }} - {{ medico.especialidad }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item lines="full">
+            <ion-label position="stacked">Fecha</ion-label>
+            <ion-input type="date" [(ngModel)]="filtros.fecha"></ion-input>
+          </ion-item>
+
+          <ion-item lines="full">
+            <ion-label position="stacked">Tamaño de página</ion-label>
+            <ion-select [(ngModel)]="filtros.size" interface="popover">
+              <ion-select-option *ngFor="let option of pageSizeOptions" [value]="option">{{ option }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item lines="full">
+            <ion-label position="stacked">Estado</ion-label>
+            <ion-select [(ngModel)]="filtros.estado" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let estado of stateOptions" [value]="estado">{{ estado }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item lines="full">
+            <ion-label position="stacked">Origen</ion-label>
+            <ion-select [(ngModel)]="filtros.origen" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let origen of originOptions" [value]="origen">{{ origen }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </div>
+
+        <div class="actions-row">
+          <ion-button expand="block" color="primary" (click)="buscar()">Aplicar filtros</ion-button>
+          <ion-button expand="block" fill="outline" color="medium" (click)="recargar()">Recargar</ion-button>
+          <ion-button expand="block" fill="clear" color="dark" (click)="logout()">Cerrar sesión</ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <section class="summary-grid">
+    <article class="summary-card accent-a">
+      <span class="summary-label">Total en página</span>
+      <strong>{{ totalFiltrado }}</strong>
+      <small>citas visibles</small>
+    </article>
+
+    <article class="summary-card accent-b">
+      <span class="summary-label">Total backend</span>
+      <strong>{{ totalRegistros }}</strong>
+      <small>registros</small>
+    </article>
+
+    <article class="summary-card accent-c">
+      <span class="summary-label">Página</span>
+      <strong>{{ paginaActual + 1 }} / {{ totalPaginas || 1 }}</strong>
+      <small>{{ formatFecha(filtros.fecha) }}</small>
+    </article>
+  </section>
+
+  <section class="results-shell">
+    <div class="results-head">
+      <div>
+        <p class="eyebrow">Listado</p>
+        <h2>{{ medicoSeleccionado?.nombre || 'Médico no definido' }}</h2>
+      </div>
+
+      <ion-badge color="tertiary">{{ filtros.estado || 'Todos los estados' }}</ion-badge>
+    </div>
+
+    <div class="loading-box" *ngIf="loading; else contentList">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Cargando citas...</p>
+    </div>
+
+    <ng-template #contentList>
+      <ion-text color="danger" *ngIf="errorMessage">
+        <p class="error-text">{{ errorMessage }}</p>
+      </ion-text>
+
+      <ion-list lines="none" class="citas-list" *ngIf="citas.length > 0; else emptyState">
+        <ion-card class="cita-card" *ngFor="let cita of citas">
+          <ion-card-content>
+            <div class="cita-top">
+              <div>
+                <p class="hora">{{ formatHora(cita.hora) }}</p>
+                <h3>{{ cita.pacienteNombre }}</h3>
+              </div>
+
+              <div class="tags">
+                <ion-badge [color]="cita.estado === 'CONFIRMADA' ? 'success' : cita.estado === 'CANCELADA' ? 'medium' : cita.estado === 'ATENDIDA' ? 'primary' : 'warning'">
+                  {{ cita.estado }}
+                </ion-badge>
+                <ion-badge color="light">{{ cita.origen }}</ion-badge>
+              </div>
+            </div>
+
+            <div class="cita-meta">
+              <span>{{ cita.pacienteDocumento }}</span>
+              <span>{{ cita.pacienteCelular }}</span>
+              <span>#{{ cita.id }}</span>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-list>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <h3>Sin citas para este filtro</h3>
+          <p>Prueba otra fecha, otro médico o limpia los filtros visuales de estado/origen.</p>
+        </div>
+      </ng-template>
+
+      <div class="pager-row" *ngIf="totalPaginas > 1">
+        <ion-button fill="outline" color="medium" [disabled]="paginaActual <= 0" (click)="paginaAnterior()">Anterior</ion-button>
+        <span>Página {{ paginaActual + 1 }} de {{ totalPaginas }}</span>
+        <ion-button fill="outline" color="medium" [disabled]="paginaActual + 1 >= totalPaginas" (click)="paginaSiguiente()">Siguiente</ion-button>
+      </div>
+    </ng-template>
+  </section>
+</ion-content>
