@@ -142,7 +142,7 @@ export class CitasService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
-  private readonly apiBase = 'http://localhost:8090/api/v1';
+  private readonly apiBase = 'http://192.168.1.54:8090/api/v1';
   private readonly requestTimeoutMs = 12000;
   private initialized = false;
   private currentMedicoId = '';

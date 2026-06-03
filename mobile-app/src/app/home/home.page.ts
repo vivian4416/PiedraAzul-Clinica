@@ -38,16 +38,17 @@ export class HomePage implements OnInit {
   }
 
   async login(): Promise<void> {
-    this.errorMessage = '';
-    this.loading = true;
+  this.errorMessage = '';
+  this.loading = true;
 
-    try {
-      await this.auth.login();
-    } catch {
-      this.errorMessage = 'No se pudo abrir el flujo de login con Keycloak.';
-      this.loading = false;
-    }
+  try {
+    await this.auth.login();
+  } catch (err) {
+    alert('Error login: ' + JSON.stringify(err) + ' | ' + (err as any)?.message);
+    this.errorMessage = 'No se pudo abrir el flujo de login con Keycloak.';
+    this.loading = false;
   }
+}
 
   async logout(): Promise<void> {
     this.loading = true;

@@ -12,7 +12,7 @@ import { firstValueFrom } from 'rxjs';
   styleUrl: './cliente.css',
 })
 export class ClienteComponent implements OnInit {
-  private readonly apiBase = 'http://localhost:8090/api/v1';
+  private readonly apiBase = 'http://192.168.1.54:8090/api/v1';
   clientes: Cliente[] = [];
 
   descripcionActual: string = 'Selecciona una especialidad para ver su descripcion.';

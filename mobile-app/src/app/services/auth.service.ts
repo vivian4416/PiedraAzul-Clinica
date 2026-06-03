@@ -30,13 +30,8 @@ export class AuthService {
   private readonly storageKey = 'piedrazul.mobile.session';
 
   async init(): Promise<boolean> {
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    if (typeof window === 'undefined') {
-      return false;
-    }
+    if (this.initPromise) return this.initPromise;
+    if (typeof window === 'undefined') return false;
 
     this.keycloak = new Keycloak({
       url: environment.keycloak.url,
@@ -44,21 +39,42 @@ export class AuthService {
       clientId: environment.keycloak.clientId,
     });
 
-    this.initPromise = this.keycloak.init({
-      onLoad: 'check-sso',
-      pkceMethod: 'S256',
-      checkLoginIframe: false,
-      responseMode: 'query',
-      redirectUri: this.getRedirectUri(),
-    }).then(async (authenticated: boolean) => {
-      this.persistSession();
-      return authenticated;
-    }).catch((error: unknown) => {
-      console.error('Keycloak init failed', error);
-      return false;
-    });
+    this.initPromise = (async () => {
+      const stored = this.readStoredSession();
 
-    return this.initPromise ?? Promise.resolve(false);
+      if (stored?.accessToken) {
+        try {
+          this.keycloak.token = stored.accessToken;
+          this.keycloak.refreshToken = stored.refreshToken;
+          this.keycloak.idToken = stored.idToken;
+          this.keycloak.tokenParsed = this.decodeJwt(stored.accessToken) as any;
+          this.keycloak.authenticated = true;
+          return true;
+        } catch {
+          this.clearStoredSession();
+        }
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        return false;
+      }
+
+      try {
+        await this.keycloak.init({
+          onLoad: 'check-sso',
+          pkceMethod: 'S256',
+          checkLoginIframe: false,
+          responseMode: 'query',
+          redirectUri: this.getRedirectUri(),
+        });
+        return this.keycloak.authenticated ?? false;
+      } catch (err) {
+        console.error('Keycloak init failed', err);
+        return false;
+      }
+    })();
+
+    return this.initPromise;
   }
 
   async login(): Promise<void> {
@@ -68,9 +84,17 @@ export class AuthService {
       throw new Error('AuthService not initialized');
     }
 
+    if (Capacitor.isNativePlatform() && !this.keycloak.endpoints) {
+      await this.keycloak.init({
+        pkceMethod: 'S256',
+        checkLoginIframe: false,
+        responseMode: 'query',
+        redirectUri: this.getRedirectUri(),
+      });
+    }
+
     const loginUrl = await this.keycloak.createLoginUrl({
       redirectUri: this.getRedirectUri(),
-      pkceMethod: 'S256',
     });
 
     if (Capacitor.isNativePlatform()) {
@@ -80,7 +104,6 @@ export class AuthService {
 
     await this.keycloak.login({
       redirectUri: this.getRedirectUri(),
-      pkceMethod: 'S256',
     });
   }
 
@@ -98,17 +121,20 @@ export class AuthService {
   async getToken(): Promise<string | null> {
     await this.ensureInitialized();
 
-    if (!this.keycloak) {
+    if (!this.keycloak) return null;
+
+    // Si keycloak no está autenticado, usar el token guardado
+    if (!this.keycloak.authenticated) {
       return this.readStoredSession()?.accessToken ?? null;
     }
 
     try {
       await this.keycloak.updateToken(30);
       this.persistSession();
-      return this.keycloak.token ?? this.readStoredSession()?.accessToken ?? null;
+      return this.keycloak.token ?? null;
     } catch (error) {
       console.error('Token refresh failed', error);
-      return this.keycloak.token ?? this.readStoredSession()?.accessToken ?? null;
+      return this.readStoredSession()?.accessToken ?? null;
     }
   }
 
@@ -126,7 +152,10 @@ export class AuthService {
       return '';
     }
 
-    const fullName = [claims.name, [claims.given_name, claims.family_name].filter(Boolean).join(' ').trim()]
+    const fullName = [
+      claims.name,
+      [claims.given_name, claims.family_name].filter(Boolean).join(' ').trim(),
+    ]
       .find((value) => Boolean(value?.trim()))
       ?.trim();
 
@@ -157,7 +186,11 @@ export class AuthService {
   getPrimaryRole(): string {
     const roles = this.getRealmRoles();
 
-    if (roles.some((role) => ['administrador', 'admin'].includes(role.toLowerCase()))) {
+    if (
+      roles.some((role) =>
+        ['administrador', 'admin'].includes(role.toLowerCase()),
+      )
+    ) {
       return 'ADMIN';
     }
 
@@ -178,7 +211,9 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     const normalized = role.trim().toLowerCase();
-    return this.getRealmRoles().some((currentRole) => currentRole.trim().toLowerCase() === normalized);
+    return this.getRealmRoles().some(
+      (currentRole) => currentRole.trim().toLowerCase() === normalized,
+    );
   }
 
   async getUserId(): Promise<string> {
@@ -196,10 +231,12 @@ export class AuthService {
   }
 
   private getRedirectUri(): string {
-    if (Capacitor.isNativePlatform()) {
+    // Si estamos en Android/iOS, window.location.origin es 'https://localhost'
+    // En web sería 'http://localhost:4200' o similar
+    if (window.location.origin === 'https://localhost' ||
+      window.location.origin === 'http://localhost') {
       return `${environment.mobileAppScheme}://login`;
     }
-
     return `${window.location.origin}/login`;
   }
 
@@ -270,5 +307,38 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  async handleRedirectCallback(url: string): Promise<void> {
+    const urlParams = new URL(
+      url.replace('co.piedrazul.clinica://', 'https://dummy/'),
+    );
+    const code = urlParams.searchParams.get('code');
+
+    if (!code) return;
+
+    this.initPromise = null;
+    this.keycloak = new Keycloak({
+      url: environment.keycloak.url,
+      realm: environment.keycloak.realm,
+      clientId: environment.keycloak.clientId,
+    });
+
+    const fakeUrl = `${window.location.origin}/login${urlParams.search}`;
+    window.history.replaceState({}, '', fakeUrl);
+
+    await this.keycloak.init({
+      pkceMethod: 'S256',
+      checkLoginIframe: false,
+      responseMode: 'query',
+      redirectUri: this.getRedirectUri(),
+    });
+
+    if (this.keycloak.authenticated) {
+      this.persistSession();
+    }
+
+    // Limpiar la URL
+    window.history.replaceState({}, '', '/');
   }
 }

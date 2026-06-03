@@ -4,11 +4,11 @@
 
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://10.0.2.2:8090/api/v1',
+  apiBaseUrl: 'http://192.168.1.54:8090/api/v1',
   keycloak: {
-    url: 'http://10.0.2.2:8080',
+    url: 'http://192.168.1.54:8080',
     realm: 'PiedraAzul_Realm',
-    clientId: 'FrontAngular',
+    clientId: 'AppMovil',
   },
   mobileAppScheme: 'co.piedrazul.clinica',
 };
