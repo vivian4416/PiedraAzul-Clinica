@@ -121,10 +121,12 @@ export class AuthService {
   async getToken(): Promise<string | null> {
     await this.ensureInitialized();
 
-    if (!this.keycloak) return null;
+    if (!this.keycloak) {
+      return this.readStoredSession()?.accessToken ?? null;
+    }
 
-    // Si keycloak no está autenticado, usar el token guardado
-    if (!this.keycloak.authenticated) {
+    // Si no pasó por init() real, usar token guardado directamente
+    if (!this.keycloak.authenticated || !this.keycloak.endpoints) {
       return this.readStoredSession()?.accessToken ?? null;
     }
 
