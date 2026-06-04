@@ -12,8 +12,14 @@ jobs:
       - name: Deploy Keycloak
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_KEYCLOAK }}
       
+      - name: Wait for Keycloak
+        run: sleep 60
+      
       - name: Deploy Backend
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_BACK }}
+      
+      - name: Wait for Backend
+        run: sleep 60
       
       - name: Deploy Frontend
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_FRONT }}
