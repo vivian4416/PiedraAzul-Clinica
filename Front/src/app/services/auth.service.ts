@@ -8,7 +8,7 @@ export class AuthService {
   private keycloak: Keycloak | null = null;
   private loginInFlight = false;
 
-  private readonly url = 'http://192.168.1.54:8080';
+  private readonly url = 'https://piedraazul-keycloak.onrender.com';
   private readonly realm = 'PiedraAzul_Realm';
   private readonly clientId = 'FrontAngular';
 

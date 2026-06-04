@@ -23,7 +23,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://192.168.1.54:8080/realms/PiedraAzul_Realm
+          issuer-uri: https://piedraazul-keycloak.onrender.com/realms/PiedraAzul_Realm
 
 app:
   jwt:
@@ -32,7 +32,7 @@ app:
 
 keycloak:
   admin:
-    base-url: ${KEYCLOAK_BASE_URL:http://192.168.1.54:8080}
+    base-url: ${KEYCLOAK_BASE_URL:https://piedraazul-keycloak.onrender.com}
     realm: ${KEYCLOAK_REALM:PiedraAzul_Realm}
     client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:PiedraAzul_Postman}
     client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:TwLCFJauVgZLnaV2YRB3kHRwvuQaUFXc}
