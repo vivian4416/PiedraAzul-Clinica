@@ -509,3 +509,8 @@ El endpoint `/api/v1/pacientes?documento=` busca pacientes existentes por docume
 - El backend registra auditoría de acciones relevantes en la tabla `auditoria`.
 - El listado de citas usa paginación con `page` y `size`.
 - La exportación CSV se hace en el frontend usando la tabla filtrada visible.
+
+## Despliegue en la nube
+- link Back -> https://piedraazul-clinica.onrender.com
+- link Front -> https://piedraazul-clinica-front.onrender.com
+- link Keycloak -> https://piedraazul-keycloak.onrender.com
